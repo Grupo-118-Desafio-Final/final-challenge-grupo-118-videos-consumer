@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-VideoProcessing.Worker-150be76c-f82e-4bfc-bd78-8bdacbe61e32</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FinalChallenge.Grupo118.StandardDependencies.Injection" Version="2026.2.13.20948" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VideoProcessing.Application\VideoProcessing.Application.csproj" />
+    <ProjectReference Include="..\VideoProcessing.Domain\VideoProcessing.Domain.csproj" />
+    <ProjectReference Include="..\VideoProcessing.Infrastructure\VideoProcessing.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
