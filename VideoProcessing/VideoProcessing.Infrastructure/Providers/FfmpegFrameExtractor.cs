@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using VideoProcessing.Domain.Ports.On;
 
 namespace VideoProcessing.Infrastructure.Providers;
@@ -10,16 +11,24 @@ public class FfmpegFrameExtractor : IFrameExtractor
     private readonly ILogger<FfmpegFrameExtractor> _logger;
     private readonly string _ffmpegPath;
     private readonly string _ffprobePath;
+    private readonly int _framesToExtract;
     private static readonly TimeSpan ProcessTimeout = TimeSpan.FromMinutes(2);
 
     public FfmpegFrameExtractor(
         ILogger<FfmpegFrameExtractor> logger,
+        IConfiguration configuration,
         string? ffmpegPath = null,
         string? ffprobePath = null)
     {
         _logger = logger;
         _ffmpegPath = string.IsNullOrWhiteSpace(ffmpegPath) ? "ffmpeg" : ffmpegPath;
         _ffprobePath = string.IsNullOrWhiteSpace(ffprobePath) ? "ffprobe" : ffprobePath;
+
+        var framesValue = configuration["QuantityFrames"];
+        if (!int.TryParse(framesValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out _framesToExtract))
+        {
+            _framesToExtract = 10;
+        }
 
         ValidateBinaryAvailable(_ffmpegPath, "ffmpeg");
         ValidateBinaryAvailable(_ffprobePath, "ffprobe");
@@ -39,7 +48,7 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
             Directory.CreateDirectory(outputDir);
 
-            var framesToExtract = 10;
+            var framesToExtract = _framesToExtract;
 
             var extractedFiles = new List<string>(framesToExtract);
 
