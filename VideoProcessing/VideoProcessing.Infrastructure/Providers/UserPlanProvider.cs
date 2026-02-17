@@ -23,10 +23,6 @@ public class UserPlanProvider : IUserPlanProvider
     {
         var requestUri = $"/plan/GetById?id={Uri.EscapeDataString(planId)}";
 
-        using var activity = Activity.StartActivity("GetUserPlan", ActivityKind.Client);
-        activity?.SetTag("user.id", planId);
-        activity?.SetTag("http.url", requestUri);
-
         HttpResponseMessage response;
         try
         {
@@ -34,7 +30,6 @@ public class UserPlanProvider : IUserPlanProvider
         }
         catch (Exception ex)
         {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Failed to call user plan API for {UserId}", planId);
             throw new HttpRequestException("Failed to call user plan API", ex);
         }
@@ -42,8 +37,6 @@ public class UserPlanProvider : IUserPlanProvider
         if (!response.IsSuccessStatusCode)
         {
             var message = $"User plan API returned status {(int)response.StatusCode}";
-            activity?.SetTag("http.status_code", (int)response.StatusCode);
-            activity?.SetStatus(ActivityStatusCode.Error, message);
             _logger.LogWarning("{Message} for {UserId}", message, planId);
             throw new HttpRequestException(message);
         }

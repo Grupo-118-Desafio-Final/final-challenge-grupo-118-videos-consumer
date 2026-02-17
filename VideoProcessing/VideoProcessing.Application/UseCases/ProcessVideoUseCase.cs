@@ -2,6 +2,7 @@
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
+using VideoProcessing.Infrastructure.Messaging;
 
 namespace VideoProcessing.Application.UseCases;
 
@@ -12,7 +13,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private readonly IFrameExtractor _extractor;
     private readonly IZipService _zipService;
     private readonly IFileStorage _storage;
-    private readonly IProcessingPublisher _publisher;
+    private readonly VideoProcessedMessageProducer _producer;
 
     public ProcessVideoUseCase(
         IUserPlanProvider planProvider,
@@ -20,14 +21,14 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         IFrameExtractor extractor,
         IZipService zipService,
         IFileStorage storage,
-        IProcessingPublisher publisher)
+        VideoProcessedMessageProducer producer)
     {
         _planProvider = planProvider;
         _downloader = downloader;
         _extractor = extractor;
         _zipService = zipService;
         _storage = storage;
-        _publisher = publisher;
+        _producer = producer;
     }
 
     public async Task ExecuteAsync(VideoProcessingEvent message)
@@ -37,8 +38,8 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             if (string.IsNullOrWhiteSpace(message.PlanId))
                 throw new ArgumentException("planId cannot be null or empty", nameof(message.PlanId));
 
-            //var userPlan = await _planProvider.GetPlanAsync(message.PlanId);
-            var userPlan = new UserPlanDto("Basic", 10, 480, "10", "10", "10");
+            var userPlan = await _planProvider.GetPlanAsync(message.PlanId);
+
             var videoLocalPath = await _downloader.DownloadAsync(message.BlobUrl);
 
             var pathFrames = await _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality);
@@ -46,11 +47,29 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             var zipPath = await _zipService.CreateZipAsync(pathFrames);
             var zipBlobUrl = await _storage.UploadAsync(zipPath);
 
-            await _publisher.PublishSuccessAsync(message.ProcessingId, zipBlobUrl);
+            var processedMessage = new VideoProcessedEvent
+            {
+                ProcessingId = message.ProcessingId,
+                BlobUrl = message.BlobUrl,
+                Success = true,
+                UserId = message.UserId,
+                EventAt = DateTime.UtcNow
+            };
+
+            await _producer.PublishAsync(processedMessage);
         }
         catch (Exception ex)
         {
-            await _publisher.PublishErrorAsync(message.ProcessingId, ex.Message);
+            var processedMessage = new VideoProcessedEvent
+            {
+                ProcessingId = message.ProcessingId,
+                BlobUrl = message.BlobUrl,
+                Success = false,
+                UserId = message.UserId,
+                EventAt = DateTime.UtcNow
+            };
+
+            await _producer.PublishAsync(processedMessage);
             throw;
         }
     }

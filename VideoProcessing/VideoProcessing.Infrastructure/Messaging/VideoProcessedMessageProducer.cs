@@ -1,17 +1,33 @@
-﻿using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
+using VideoProcessing.Domain.Events;
+using VideoProcessing.Infrastructure.Messaging.Configuration;
 
-namespace VideoProcessing.Infrastructure.Messaging
+namespace VideoProcessing.Infrastructure.Messaging;
+
+public class VideoProcessedMessageProducer
 {
-    internal class VideoProcessedMessageProducer : BackgroundService
+    private readonly RabbitMqConnectionFactory _factory;
+    private readonly RabbitMqSettings _settings;
+
+    public VideoProcessedMessageProducer(RabbitMqConnectionFactory factory, IOptions<RabbitMqSettings> options)
     {
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            throw new NotImplementedException();
-        }
+        _factory = factory;
+        _settings = options.Value;
+    }
+
+    public async Task PublishAsync(VideoProcessedEvent message)
+    {
+        var connection = await _factory.CreateAsync();
+        var channel = await connection.CreateChannelAsync();
+
+        var json = JsonSerializer.Serialize(message);
+        var body = Encoding.UTF8.GetBytes(json);
+
+        await channel.BasicPublishAsync(exchange: string.Empty, routingKey: _settings.VideoProcessedQueue, body: body);
+
+        await Task.CompletedTask;
     }
 }

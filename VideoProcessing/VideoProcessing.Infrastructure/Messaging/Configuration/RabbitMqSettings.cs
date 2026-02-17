@@ -8,4 +8,5 @@ public class RabbitMqSettings
     public string Password { get; set; } = default!;
     public string VirtualHost { get; set; } = default!;
     public string VideoProcessingQueue { get; set; }
+    public string VideoProcessedQueue { get; set; }
 }

@@ -4,7 +4,6 @@ using VideoProcessing.Infrastructure.Messaging.Configuration;
 using VideoProcessing.Domain.Ports.On;
 using VideoProcessing.Infrastructure.Providers;
 using Azure.Storage.Blobs;
-using System.Net.Http.Headers;;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddHostedService<VideoProcessingMessageConsumer>();
@@ -29,7 +28,7 @@ builder.Services.AddHttpClient<IUserPlanProvider, UserPlanProvider>(client =>
 
     if (!string.IsNullOrWhiteSpace(userApiKey))
     {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", userApiKey);
+        client.DefaultRequestHeaders.Add("X-Api-Key", userApiKey);
     }
 });
 
@@ -43,7 +42,6 @@ builder.Services.AddScoped<IFrameExtractor, FfmpegFrameExtractor>();
 
 builder.Services.AddScoped<IZipService, ZipService>();
 builder.Services.AddScoped<IFileStorage, BlobFileStorage>();
-builder.Services.AddScoped<IProcessingPublisher, LoggingProcessingPublisher>();
 
 var host = builder.Build();
 host.Run();
