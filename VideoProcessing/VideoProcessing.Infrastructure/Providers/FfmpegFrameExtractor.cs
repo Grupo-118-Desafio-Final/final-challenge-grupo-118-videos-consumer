@@ -45,6 +45,9 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
             var durationSeconds = await GetVideoDurationSecondsAsync(videoPath);
 
+            if (durationSeconds <= 0)
+                throw new InvalidOperationException("Could not determine video duration");
+
             var interval = durationSeconds / (framesToExtract + 1);
 
             var q = MapResolutionOrQualityToQscale(qualityImage, out var mappedFromResolution);
@@ -59,8 +62,11 @@ public class FfmpegFrameExtractor : IFrameExtractor
                 var args =
                     $"-ss {timestampSeconds.ToString(CultureInfo.InvariantCulture)} " +
                     $"-i \"{videoPath}\" " +
-                    $"-frames:v 1 -q:v {q} " +
+                    $"-frames:v 1 " +
+                    $"-vf scale={qualityImage}:-1 " +
+                    $"-q:v {q} " +
                     $"\"{outputFile}\" -y";
+
 
                 var result = await RunProcessAsync(_ffmpegPath, args);
 
@@ -96,7 +102,7 @@ public class FfmpegFrameExtractor : IFrameExtractor
             _logger.LogError(ex, "Failed to make frames");
             throw;
         }
-        
+
     }
 
     private static int MapResolutionOrQualityToQscale(int value, out bool mappedFromResolution)

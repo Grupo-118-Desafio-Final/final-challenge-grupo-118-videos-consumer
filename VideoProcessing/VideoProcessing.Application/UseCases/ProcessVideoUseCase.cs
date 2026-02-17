@@ -46,7 +46,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             var zipPath = await _zipService.CreateZipAsync(pathFrames);
             var zipBlobUrl = await _storage.UploadAsync(zipPath);
 
-            //await _publisher.PublishSuccessAsync(message.ProcessingId, zipBlobUrl);
+            await _publisher.PublishSuccessAsync(message.ProcessingId, zipBlobUrl);
         }
         catch (Exception ex)
         {
