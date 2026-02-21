@@ -1,5 +1,4 @@
-﻿using VideoProcessing.Domain.Dtos;
-using VideoProcessing.Domain.Events;
+﻿using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
 using VideoProcessing.Infrastructure.Messaging;
@@ -45,28 +44,26 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             var pathFrames = await _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality);
 
             var zipPath = await _zipService.CreateZipAsync(pathFrames);
-            var zipBlobUrl = await _storage.UploadAsync(zipPath);
+            var zipBlobUrl = await _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId);
 
-            var processedMessage = new VideoProcessedEvent
+            var processedMessage = new NotificationEvent
             {
-                ProcessingId = message.ProcessingId,
-                BlobUrl = message.BlobUrl,
-                Success = true,
+                IsSuccess = true,
+                Message = "Video processed successfully",
                 UserId = message.UserId,
-                EventAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             await _producer.PublishAsync(processedMessage);
         }
         catch (Exception ex)
         {
-            var processedMessage = new VideoProcessedEvent
+            var processedMessage = new NotificationEvent
             {
-                ProcessingId = message.ProcessingId,
-                BlobUrl = message.BlobUrl,
-                Success = false,
+                IsSuccess = false,
+                Message = "Error processing video",
                 UserId = message.UserId,
-                EventAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             await _producer.PublishAsync(processedMessage);

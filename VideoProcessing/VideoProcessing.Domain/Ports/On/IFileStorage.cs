@@ -2,5 +2,5 @@
 
 public interface IFileStorage
 {
-    Task<string> UploadAsync(string filePath);
+    Task<string> UploadAsync(string filePath, string userId, string processingId);
 }

@@ -7,6 +7,6 @@ public class RabbitMqSettings
     public string UserName { get; set; } = default!;
     public string Password { get; set; } = default!;
     public string VirtualHost { get; set; } = default!;
-    public string VideoProcessingQueue { get; set; }
-    public string VideoProcessedQueue { get; set; }
+    public string ProcessImagesQueue { get; set; }
+    public string NotificationQueue { get; set; }
 }

@@ -18,7 +18,7 @@ public class VideoProcessedMessageProducer
         _settings = options.Value;
     }
 
-    public async Task PublishAsync(VideoProcessedEvent message)
+    public async Task PublishAsync(NotificationEvent message)
     {
         var connection = await _factory.CreateAsync();
         var channel = await connection.CreateChannelAsync();
@@ -26,7 +26,7 @@ public class VideoProcessedMessageProducer
         var json = JsonSerializer.Serialize(message);
         var body = Encoding.UTF8.GetBytes(json);
 
-        await channel.BasicPublishAsync(exchange: string.Empty, routingKey: _settings.VideoProcessedQueue, body: body);
+        await channel.BasicPublishAsync(exchange: string.Empty, routingKey: _settings.NotificationQueue, body: body);
 
         await Task.CompletedTask;
     }

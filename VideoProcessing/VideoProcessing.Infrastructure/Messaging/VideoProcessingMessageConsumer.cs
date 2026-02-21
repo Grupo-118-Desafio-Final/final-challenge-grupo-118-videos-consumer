@@ -66,7 +66,7 @@ public class VideoProcessingMessageConsumer : BackgroundService
             }
         };
 
-        await channel.BasicConsumeAsync(_settings.VideoProcessingQueue, autoAck: false,consumer);
+        await channel.BasicConsumeAsync(_settings.ProcessImagesQueue, autoAck: false,consumer);
 
         Console.WriteLine("Consumer conectado e aguardando mensagens...");
 
