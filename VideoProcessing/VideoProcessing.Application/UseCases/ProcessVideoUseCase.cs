@@ -1,4 +1,5 @@
-﻿using VideoProcessing.Domain.Events;
+﻿using VideoProcessing.Domain.Enums;
+using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
 using VideoProcessing.Infrastructure.Messaging;
@@ -13,6 +14,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private readonly IZipService _zipService;
     private readonly IFileStorage _storage;
     private readonly VideoProcessedMessageProducer _producer;
+    private readonly IProcessingRepository _processingRepository;
 
     public ProcessVideoUseCase(
         IUserPlanProvider planProvider,
@@ -20,7 +22,8 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         IFrameExtractor extractor,
         IZipService zipService,
         IFileStorage storage,
-        VideoProcessedMessageProducer producer)
+        VideoProcessedMessageProducer producer,
+        IProcessingRepository processingRepository)
     {
         _planProvider = planProvider;
         _downloader = downloader;
@@ -28,6 +31,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         _zipService = zipService;
         _storage = storage;
         _producer = producer;
+        _processingRepository = processingRepository;
     }
 
     public async Task ExecuteAsync(VideoProcessingEvent message)
@@ -45,6 +49,8 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
 
             var zipPath = await _zipService.CreateZipAsync(pathFrames);
             var zipBlobUrl = await _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId);
+         
+            await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Processed, zipBlobUrl);
 
             var processedMessage = new NotificationEvent
             {
@@ -58,6 +64,8 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         }
         catch (Exception ex)
         {
+            await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
+
             var processedMessage = new NotificationEvent
             {
                 IsSuccess = false,

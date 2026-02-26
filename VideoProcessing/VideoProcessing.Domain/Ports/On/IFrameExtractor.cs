@@ -1,6 +1,4 @@
-﻿using VideoProcessing.Domain.Enums;
-
-namespace VideoProcessing.Domain.Ports.On;
+﻿namespace VideoProcessing.Domain.Ports.On;
 
 public interface IFrameExtractor
 {

@@ -3,6 +3,8 @@ using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Infrastructure.Messaging.Configuration;
 using VideoProcessing.Domain.Ports.On;
 using VideoProcessing.Infrastructure.Providers;
+using VideoProcessing.Infrastructure.Messaging;
+using MongoDB.Driver;
 using Azure.Storage.Blobs;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -14,6 +16,7 @@ builder.Services.Configure<RabbitMqSettings>(
 
 builder.Services.AddScoped<IProcessVideoUseCase, ProcessVideoUseCase>();
 builder.Services.AddSingleton<RabbitMqConnectionFactory>();
+builder.Services.AddScoped<VideoProcessedMessageProducer>();
 
 var userApiSection = builder.Configuration.GetSection("UserApi");
 var userApiBaseUrl = userApiSection.GetValue<string>("BaseUrl");
@@ -42,6 +45,11 @@ builder.Services.AddScoped<IFrameExtractor, FfmpegFrameExtractor>();
 
 builder.Services.AddScoped<IZipService, ZipService>();
 builder.Services.AddScoped<IFileStorage, BlobFileStorage>();
+
+// MongoDB client and processing repository
+var mongoConnectionString = builder.Configuration.GetValue<string>("MongoDb:ConnectionString");
+builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectionString));
+builder.Services.AddScoped<IProcessingRepository, MongoProcessingRepository>();
 
 var host = builder.Build();
 host.Run();
