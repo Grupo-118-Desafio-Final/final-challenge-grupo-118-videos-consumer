@@ -18,22 +18,40 @@ public class RabbitMqConnectionFactory
         if (_connection is { IsOpen: true })
             return _connection;
 
-        var factory = new ConnectionFactory
+        ConnectionFactory factory;
+
+        factory = new ConnectionFactory
         {
-            HostName = _settings.Host,
-            Port = _settings.Port,
-            UserName = _settings.UserName,
-            Password = _settings.Password,
-            VirtualHost = _settings.VirtualHost,
-            Ssl = new SslOption
-            {
-                Enabled = true,
-                ServerName = _settings.Host
-            }
+            Uri = new Uri(_settings.ConnectionUri),
+            AutomaticRecoveryEnabled = true
         };
 
-        _connection = await factory.CreateConnectionAsync();
+        var maxAttempts = Math.Max(1, _settings.ConnectionRetryCount);
+        var delay = Math.Max(100, _settings.ConnectionRetryDelayMs);
+        var attempt = 0;
 
-        return _connection;
+        while (true)
+        {
+            try
+            {
+                _connection = await factory.CreateConnectionAsync();
+                return _connection;
+            }
+            catch (RabbitMQ.Client.Exceptions.AuthenticationFailureException authEx)
+            {
+                // Authentication failed - these credentials or virtual host are likely incorrect.
+                throw new InvalidOperationException("RabbitMQ authentication failed. Check Host, UserName, Password and VirtualHost configuration.", authEx);
+            }
+            catch (Exception)
+            {
+                attempt++;
+                if (attempt >= maxAttempts)
+                    throw;
+
+                await Task.Delay(delay);
+                // exponential backoff but cap it to a reasonable value
+                delay = Math.Min(30000, delay * 2);
+            }
+        }
     }
 }

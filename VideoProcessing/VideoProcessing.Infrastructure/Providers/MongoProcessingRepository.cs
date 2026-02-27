@@ -10,10 +10,13 @@ public class MongoProcessingRepository : IProcessingRepository
 {
     private readonly IMongoCollection<BsonDocument> _collection;
 
-    public MongoProcessingRepository(IMongoClient client, IConfiguration configuration)
+    public MongoProcessingRepository(IConfiguration configuration)
     {
-        var databaseName = configuration["MongoDb:Database"] ?? "videoprocessing";
-        var collectionName = configuration["MongoDb:Collection"] ?? "processings";
+        var connectionString = configuration["MongoDb:ConnectionString"];
+        var client = new MongoClient(connectionString);
+
+        var databaseName = configuration["MongoDb:Database"];
+        var collectionName = configuration["MongoDb:Collection"];
         var database = client.GetDatabase(databaseName);
         _collection = database.GetCollection<BsonDocument>(collectionName);
     }

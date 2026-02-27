@@ -11,7 +11,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddHostedService<VideoProcessingMessageConsumer>();
 
 builder.Services.Configure<RabbitMqSettings>(
-    builder.Configuration.GetSection("RabbitMq")
+    builder.Configuration.GetSection("RabbitMqSettings")
 );
 
 builder.Services.AddScoped<IProcessVideoUseCase, ProcessVideoUseCase>();

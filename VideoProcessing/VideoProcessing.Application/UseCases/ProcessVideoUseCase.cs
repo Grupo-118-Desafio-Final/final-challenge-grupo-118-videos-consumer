@@ -1,4 +1,5 @@
-﻿using VideoProcessing.Domain.Enums;
+﻿using VideoProcessing.Domain.Dtos;
+using VideoProcessing.Domain.Enums;
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
@@ -42,6 +43,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
                 throw new ArgumentException("planId cannot be null or empty", nameof(message.PlanId));
 
             var userPlan = await _planProvider.GetPlanAsync(message.PlanId);
+            //var userPlan = new UserPlanDto("Basic", 12, 480, "", "", "");
 
             var videoLocalPath = await _downloader.DownloadAsync(message.BlobUrl);
 
