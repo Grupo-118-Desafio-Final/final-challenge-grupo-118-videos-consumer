@@ -20,7 +20,7 @@ builder.Services.AddScoped<VideoProcessedMessageProducer>();
 
 var userApiSection = builder.Configuration.GetSection("UserApi");
 var userApiBaseUrl = userApiSection.GetValue<string>("BaseUrl");
-var userApiKey = userApiSection.GetValue<string>("apiKey");
+var userApiKey = userApiSection.GetValue<string>("ApiKey");
 
 builder.Services.AddHttpClient<IUserPlanProvider, UserPlanProvider>(client =>
 {
