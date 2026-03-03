@@ -21,12 +21,12 @@ public class MongoProcessingRepository : IProcessingRepository
         _collection = database.GetCollection<BsonDocument>(collectionName);
     }
 
-    public async Task UpdateProcessing(string processingId, ProcessingStatus status,string? zipBlobUrl = null)
+    public async Task UpdateProcessing(string processingId, ProcessingStatus status, string? zipBlobUrl = null)
     {
         var filter = Builders<BsonDocument>.Filter.Eq("ProcessingId", processingId);
         var update = Builders<BsonDocument>.Update
             .Set("ZipBlobUrl", zipBlobUrl)
-            .Set("Status", status);
+            .Set("Status", status.ToString());
 
         await _collection.UpdateOneAsync(filter, update);
     }
