@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-VideoProcessing.Worker-150be76c-f82e-4bfc-bd78-8bdacbe61e32</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,5 +19,11 @@
     <ProjectReference Include="..\VideoProcessing.Application\VideoProcessing.Application.csproj" />
     <ProjectReference Include="..\VideoProcessing.Domain\VideoProcessing.Domain.csproj" />
     <ProjectReference Include="..\VideoProcessing.Infrastructure\VideoProcessing.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
   </ItemGroup>
 </Project>
