@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main, feature/implements-upload-api ]
+    branches: [ main, develop, feature/consumer ]
 
 permissions:
   pull-requests: write  # Required for PR comments
