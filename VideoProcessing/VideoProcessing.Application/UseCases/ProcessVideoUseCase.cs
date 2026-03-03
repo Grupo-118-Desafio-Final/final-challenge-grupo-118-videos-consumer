@@ -1,5 +1,4 @@
-﻿using VideoProcessing.Domain.Dtos;
-using VideoProcessing.Domain.Enums;
+﻿using VideoProcessing.Domain.Enums;
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
