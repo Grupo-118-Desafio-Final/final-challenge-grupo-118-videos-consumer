@@ -9,8 +9,14 @@ COPY ["VideoProcessing/VideoProcessing.Worker/VideoProcessing.Worker.csproj", "V
 COPY ["VideoProcessing/VideoProcessing.Application/VideoProcessing.Application.csproj", "VideoProcessing.Application/"]
 COPY ["VideoProcessing/VideoProcessing.Domain/VideoProcessing.Domain.csproj", "VideoProcessing.Domain/"]
 COPY ["VideoProcessing/VideoProcessing.Infrastructure/VideoProcessing.Infrastructure.csproj", "VideoProcessing.Infrastructure/"]
+
 RUN dotnet restore "VideoProcessing.Worker/VideoProcessing.Worker.csproj"
-COPY . .
+
+COPY VideoProcessing/VideoProcessing.Worker/ VideoProcessing.Worker/
+COPY VideoProcessing/VideoProcessing.Application/ VideoProcessing.Application/
+COPY VideoProcessing/VideoProcessing.Domain/ VideoProcessing.Domain/
+COPY VideoProcessing/VideoProcessing.Infrastructure/ VideoProcessing.Infrastructure/
+
 WORKDIR "/src/VideoProcessing.Worker"
 RUN dotnet build "./VideoProcessing.Worker.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
