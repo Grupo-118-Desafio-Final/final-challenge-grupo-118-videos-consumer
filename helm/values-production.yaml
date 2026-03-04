@@ -81,4 +81,4 @@ persistence:
     accessModes:
       - ReadWriteMany
   storageClassName: azurefile-csi
-  mountPath:
+  mountPath: /app/data
