@@ -17,11 +17,11 @@ jobs:
     with:
       sonar-project-key: 'final-challenge-grupo-118-videos-consumer'
       sonar-organization: 'grupo-118-desafio-final'
-      solution-path: './VideosProcessing/VideoProcessing.sln'
-      test-projects: './VideosProcessing/VideoProcessing.sln'
+      solution-path: './VideoProcessing/VideoProcessing.sln'
+      test-projects: './VideoProcessing/VideoProcessing.sln'
       dotnet-version: '8.0.x'
       build-configuration: 'Release'
-      dockerfile-path: './VideosProcessing/VideoProcessing.Worker/Dockerfile'
+      dockerfile-path: './VideoProcessing/VideoProcessing.Worker/Dockerfile'
       image-name: 'final-challenge-grupo-118-videos-consumer'
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
