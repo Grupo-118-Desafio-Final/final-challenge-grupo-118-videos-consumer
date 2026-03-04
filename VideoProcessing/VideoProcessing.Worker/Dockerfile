@@ -5,10 +5,10 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["VideoProcessing.Worker/VideoProcessing.Worker.csproj", "VideoProcessing.Worker/"]
-COPY ["VideoProcessing.Application/VideoProcessing.Application.csproj", "VideoProcessing.Application/"]
-COPY ["VideoProcessing.Domain/VideoProcessing.Domain.csproj", "VideoProcessing.Domain/"]
-COPY ["VideoProcessing.Infrastructure/VideoProcessing.Infrastructure.csproj", "VideoProcessing.Infrastructure/"]
+COPY ["VideoProcessing/VideoProcessing.Worker/VideoProcessing.Worker.csproj", "VideoProcessing.Worker/"]
+COPY ["VideoProcessing/VideoProcessing.Application/VideoProcessing.Application.csproj", "VideoProcessing.Application/"]
+COPY ["VideoProcessing/VideoProcessing.Domain/VideoProcessing.Domain.csproj", "VideoProcessing.Domain/"]
+COPY ["VideoProcessing/VideoProcessing.Infrastructure/VideoProcessing.Infrastructure.csproj", "VideoProcessing.Infrastructure/"]
 RUN dotnet restore "VideoProcessing.Worker/VideoProcessing.Worker.csproj"
 COPY . .
 WORKDIR "/src/VideoProcessing.Worker"
