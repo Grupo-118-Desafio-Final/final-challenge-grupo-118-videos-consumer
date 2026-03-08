@@ -1,0 +1,45 @@
+name: CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy'
+        required: true
+      helm_chart_version:
+        description: 'Helm chart version to deploy'
+        required: true
+      helm_chart_name:
+        description: 'Field to insert the Helm Chart Name'
+        required: true
+        default: "grupo118fasefinal"
+      helm_release_name:
+        description: 'Field to define the release name'
+        required: true
+        default: 'final-challenge-grupo-118-videos-consumer'
+
+jobs:
+  deploy:
+    uses: Grupo-118-Desafio-Final/final-challenge-grupo-118-template-pipeline/.github/workflows/dotnet-cd-template.yml@main
+    secrets: inherit
+    with:
+      helm_chart_version: ${{ github.event.inputs.helm_chart_version }}
+      helm_chart_name: ${{ github.event.inputs.helm_chart_name }}
+      helm_values_file: "helm/values-production.yaml"
+      helm_release_name: ${{ github.event.inputs.helm_release_name }}
+      #         STEPS: 1. Mapear os segredos para as variaveis do helm, do jeito que api espera
+      secrets_mapping: |
+        {
+            "DOCKER_REGISTRY": "DOCKER_REGISTRY",
+            "ACR_USERNAME": "ACR_USERNAME",
+            "ACR_PASSWORD": "ACR_PASSWORD",
+            "RabbitMqSettings__ConnectionUri":"APPLICATION_MESSAGING_CONNECTIONSTRING",
+            "AzureBlob__ConnectionString":"APPLICATION_BLOBSTORAGE_CONNECTIONSTRING",
+            "AzureBlob__ContainerName":"APPLICATION_BLOBSTORAGE_CONTAINERNAME",
+            "MongoDB__ConnectionString":"APPLICATION_MONGODB_CONNECTIONSTRING",
+            "MongoDB__Database":"APPLICATION_MONGODB_DATABASENAME"
+        }
+      variables_mapping: |
+        {
+            "POC_IMAGE_TAG": "${{ github.event.inputs.image_tag }}"
+        }
