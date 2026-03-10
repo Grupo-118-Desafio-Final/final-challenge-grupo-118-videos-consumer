@@ -91,7 +91,7 @@ affinity: {}
 
 persistence:
     enabled: true
-    size: 5gi
+    size: 5Gi
     accessModes:
       - ReadWriteMany
     storageClassName: azurefile-csi
