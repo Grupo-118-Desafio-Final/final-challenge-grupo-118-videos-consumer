@@ -25,7 +25,7 @@ public class Program
 
         builder.Services.AddScoped<IProcessVideoUseCase, ProcessVideoUseCase>();
         builder.Services.AddSingleton<RabbitMqConnectionFactory>();
-        builder.Services.AddScoped<VideoProcessedMessageProducer>();
+        builder.Services.AddScoped<IVideoProcessedMessageProducer, VideoProcessedMessageProducer>();
 
         var userApiSection = builder.Configuration.GetSection("UserApi");
         var userApiBaseUrl = userApiSection.GetValue<string>("BaseUrl");

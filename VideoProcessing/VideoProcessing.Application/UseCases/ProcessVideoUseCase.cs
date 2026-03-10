@@ -13,7 +13,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private readonly IFrameExtractor _extractor;
     private readonly IZipService _zipService;
     private readonly IFileStorage _storage;
-    private readonly VideoProcessedMessageProducer _producer;
+    private readonly IVideoProcessedMessageProducer _producer;
     private readonly IProcessingRepository _processingRepository;
 
     public ProcessVideoUseCase(
@@ -22,7 +22,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         IFrameExtractor extractor,
         IZipService zipService,
         IFileStorage storage,
-        VideoProcessedMessageProducer producer,
+        IVideoProcessedMessageProducer producer,
         IProcessingRepository processingRepository)
     {
         _planProvider = planProvider;
@@ -42,7 +42,6 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
                 throw new ArgumentException("planId cannot be null or empty", nameof(message.PlanId));
 
             var userPlan = await _planProvider.GetPlanAsync(message.PlanId);
-            //var userPlan = new UserPlanDto("Basic", 12, 480, "", "", "");
 
             var videoLocalPath = await _downloader.DownloadAsync(message.BlobUrl);
 

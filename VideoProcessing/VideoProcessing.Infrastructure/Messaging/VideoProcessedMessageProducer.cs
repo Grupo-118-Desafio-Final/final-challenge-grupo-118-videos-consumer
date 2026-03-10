@@ -3,11 +3,12 @@ using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
 using VideoProcessing.Domain.Events;
+using VideoProcessing.Domain.Ports.On;
 using VideoProcessing.Infrastructure.Messaging.Configuration;
 
 namespace VideoProcessing.Infrastructure.Messaging;
 
-public class VideoProcessedMessageProducer
+public class VideoProcessedMessageProducer : IVideoProcessedMessageProducer
 {
     private readonly RabbitMqConnectionFactory _factory;
     private readonly RabbitMqSettings _settings;
