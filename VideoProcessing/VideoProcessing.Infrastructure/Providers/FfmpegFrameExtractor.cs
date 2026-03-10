@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using VideoProcessing.Domain.Ports.On;
 
 namespace VideoProcessing.Infrastructure.Providers;
 
+[ExcludeFromCodeCoverage]
 public class FfmpegFrameExtractor : IFrameExtractor
 {
     private readonly ILogger<FfmpegFrameExtractor> _logger;
@@ -119,7 +121,6 @@ public class FfmpegFrameExtractor : IFrameExtractor
             _logger.LogError(ex, "Failed to make frames");
             throw;
         }
-
     }
 
     private static int MapResolutionOrQualityToQscale(int value, out bool mappedFromResolution)

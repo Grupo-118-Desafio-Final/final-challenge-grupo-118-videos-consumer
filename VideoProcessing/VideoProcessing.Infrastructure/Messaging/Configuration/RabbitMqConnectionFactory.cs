@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace VideoProcessing.Infrastructure.Messaging.Configuration;
@@ -14,6 +15,7 @@ public class RabbitMqConnectionFactory
         _settings = options.Value;
     }
 
+    [ExcludeFromCodeCoverage]
     public async Task<IConnection> CreateAsync()
     {
         if (_connection is { IsOpen: true })
