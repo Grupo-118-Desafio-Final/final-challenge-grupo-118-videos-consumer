@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Azure.Storage.Blobs;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using StandardDependencies.Injection;
 using StandardDependencies.Models;
@@ -67,6 +68,15 @@ public class Program
         // MongoDB client and processing repository
         var mongoConnectionString = builder.Configuration.GetValue<string>("MongoDb:ConnectionString");
         builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectionString));
+        
+        builder.Services.AddSingleton<IMongoCollection<BsonDocument>>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var client = new MongoClient(config["MongoDb:ConnectionString"]);
+            var database = client.GetDatabase(config["MongoDb:Database"]);
+            return database.GetCollection<BsonDocument>(config["MongoDb:Collection"]);
+        });
+        
         builder.Services.AddScoped<IProcessingRepository, MongoProcessingRepository>();
 
         var host = builder.Build();
