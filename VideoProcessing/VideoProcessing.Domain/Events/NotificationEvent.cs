@@ -1,5 +1,8 @@
-﻿namespace VideoProcessing.Domain.Events;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace VideoProcessing.Domain.Events;
+
+[ExcludeFromCodeCoverage]
 public class NotificationEvent
 {
     public bool IsSuccess { get; set; }

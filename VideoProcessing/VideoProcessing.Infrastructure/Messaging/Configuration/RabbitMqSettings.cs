@@ -1,5 +1,8 @@
-﻿namespace VideoProcessing.Infrastructure.Messaging.Configuration;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace VideoProcessing.Infrastructure.Messaging.Configuration;
+
+[ExcludeFromCodeCoverage]
 public class RabbitMqSettings
 {
     public string ProcessImagesQueue { get; set; }

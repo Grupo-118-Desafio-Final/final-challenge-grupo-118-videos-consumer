@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Azure.Storage.Blobs;
 using MongoDB.Driver;
 using VideoProcessing.Application.UseCases;
@@ -9,6 +10,7 @@ using VideoProcessing.Infrastructure.Providers;
 
 namespace VideoProcessing.Worker;
 
+[ExcludeFromCodeCoverage]
 public class Program
 {
     static async Task Main(string[] args)

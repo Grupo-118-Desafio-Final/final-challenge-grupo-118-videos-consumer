@@ -1,5 +1,8 @@
-﻿namespace VideoProcessing.Domain.Events;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace VideoProcessing.Domain.Events;
+
+[ExcludeFromCodeCoverage]
 public class VideoProcessingEvent
 {
     public string UserId { get; set; } 

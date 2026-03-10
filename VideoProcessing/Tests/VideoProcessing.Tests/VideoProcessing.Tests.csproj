@@ -32,8 +32,4 @@
         <ProjectReference Include="..\..\VideoProcessing.Infrastructure\VideoProcessing.Infrastructure.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Application\UseCases\" />
-    </ItemGroup>
-
 </Project>
