@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Domain", "V
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Application", "VideoProcessing.Application\VideoProcessing.Application.csproj", "{523197E4-C331-4D2F-9D92-1CE994B76201}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{DFB76416-6E79-42EF-B9DC-9F5DBE08B60A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Tests", "Tests\VideoProcessing.Tests\VideoProcessing.Tests.csproj", "{E18A98DF-D14D-4994-AB26-567BD9456F7B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,11 +37,18 @@ Global
 		{523197E4-C331-4D2F-9D92-1CE994B76201}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{523197E4-C331-4D2F-9D92-1CE994B76201}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{523197E4-C331-4D2F-9D92-1CE994B76201}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E18A98DF-D14D-4994-AB26-567BD9456F7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E18A98DF-D14D-4994-AB26-567BD9456F7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E18A98DF-D14D-4994-AB26-567BD9456F7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E18A98DF-D14D-4994-AB26-567BD9456F7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {085BC046-272E-4D4E-B055-AA673B8CD355}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E18A98DF-D14D-4994-AB26-567BD9456F7B} = {DFB76416-6E79-42EF-B9DC-9F5DBE08B60A}
 	EndGlobalSection
 EndGlobal
