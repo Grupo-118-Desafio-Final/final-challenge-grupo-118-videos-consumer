@@ -58,6 +58,7 @@ secret:
     video-consumer-rabbitmq-connectionstring: "${RabbitMqSettings__ConnectionUri}"
     video-consumer-userapi-baseurl: "${UserApi__BaseUrl}"
     video-consumer-userapi-apikey: "${UserApi__ApiKey}"
+    video-consumer-basepath: "${FramesOutputPath}"
     otlp-url: "${OpenTelemetry__Url}"
 
   envVars:
@@ -77,6 +78,8 @@ secret:
       secretKey: video-consumer-userapi-apikey
     - name: OpenTelemetry__Url
       secretKey: otlp-url
+    - name: FramesOutputPath
+      secretKey: video-consumer-basepath
 
 nodeSelector: {}
 
@@ -89,5 +92,5 @@ persistence:
     size: 5gi
     accessModes:
       - ReadWriteMany
-  storageClassName: azurefile-csi
-  mountPath: /app/data
+    storageClassName: azurefile-csi
+    mountPath: /app/data
