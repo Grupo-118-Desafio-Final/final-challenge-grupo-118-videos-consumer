@@ -13,7 +13,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private readonly IFrameExtractor _extractor;
     private readonly IZipService _zipService;
     private readonly IFileStorage _storage;
-    private readonly VideoProcessedMessageProducer _producer;
+    private readonly IVideoProcessedMessageProducer _producer;
     private readonly IProcessingRepository _processingRepository;
 
     public ProcessVideoUseCase(
@@ -22,7 +22,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         IFrameExtractor extractor,
         IZipService zipService,
         IFileStorage storage,
-        VideoProcessedMessageProducer producer,
+        IVideoProcessedMessageProducer producer,
         IProcessingRepository processingRepository)
     {
         _planProvider = planProvider;
