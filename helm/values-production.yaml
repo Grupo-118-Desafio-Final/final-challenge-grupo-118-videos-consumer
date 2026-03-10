@@ -23,8 +23,10 @@ serviceAccount:
   annotations: {}
   name: "final-challenge-grupo-118-videos-consumer-sa"
   
-service: {}
+service: null
 
+livenessProbe: null
+readinessProbe: null
 
 internalIngress:
   enabled: false
