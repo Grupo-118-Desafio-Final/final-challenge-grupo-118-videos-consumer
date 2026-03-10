@@ -40,38 +40,55 @@ public class VideoProcessingMessageConsumer : BackgroundService
 
         consumer.ReceivedAsync += async (_, ea) =>
         {
-            try
-            {
-                var json = Encoding.UTF8.GetString(ea.Body.ToArray());
-
-                Console.WriteLine($"Mensagem recebida: {json}");
-
-                var message = JsonSerializer.Deserialize<VideoProcessingEvent>(json, JsonOptions);
-
-                if (message == null)
-                    throw new Exception("Mensagem inválida");
-
-                using var scope = _scopeFactory.CreateScope();
-
-                var useCase = scope.ServiceProvider.GetRequiredService<IProcessVideoUseCase>();
-
-                await useCase.ExecuteAsync(message);
-
-                await channel.BasicAckAsync(ea.DeliveryTag, false);
-
-                Console.WriteLine("Mensagem processada com sucesso");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro ao processar mensagem: {ex}");
-                await channel.BasicNackAsync( ea.DeliveryTag,false,false);
-            }
+            await HandleMessageAsync(channel, ea);
         };
 
-        await channel.BasicConsumeAsync(_settings.ProcessImagesQueue, autoAck: false,consumer);
+        await channel.BasicConsumeAsync(_settings.ProcessImagesQueue, autoAck: false, consumer);
 
         Console.WriteLine("Consumer conectado e aguardando mensagens...");
 
-        await Task.Delay(Timeout.Infinite,stoppingToken);
+        await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    protected virtual async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea)
+    {
+        try
+        {
+            var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+            Console.WriteLine($"Mensagem recebida: {json}");
+
+            var message = await DeserializeMessageAsync(json);
+
+            await ProcessMessageAsync(message);
+
+            await channel.BasicAckAsync(ea.DeliveryTag, false);
+
+            Console.WriteLine("Mensagem processada com sucesso");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao processar mensagem: {ex}");
+            await channel.BasicNackAsync(ea.DeliveryTag, false, false);
+        }
+    }
+
+    protected virtual Task<VideoProcessingEvent> DeserializeMessageAsync(string json)
+    {
+        var message = JsonSerializer.Deserialize<VideoProcessingEvent>(json, JsonOptions);
+
+        if (message == null)
+            throw new InvalidOperationException("Mensagem inválida ou vazia");
+
+        return Task.FromResult(message);
+    }
+
+    protected virtual async Task ProcessMessageAsync(VideoProcessingEvent message)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var useCase = scope.ServiceProvider.GetRequiredService<IProcessVideoUseCase>();
+
+        await useCase.ExecuteAsync(message);
     }
 }
