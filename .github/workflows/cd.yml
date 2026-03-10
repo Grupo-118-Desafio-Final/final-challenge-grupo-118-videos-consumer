@@ -39,7 +39,8 @@ jobs:
             "MongoDB__ConnectionString":"APPLICATION_MONGODB_CONNECTIONSTRING",
             "MongoDB__Database":"APPLICATION_MONGODB_DATABASENAME",
             "UserApi__BaseUrl": "API_BACKOFFICE_BASEURL",
-            "UserApi__ApiKey": "API_BACKOFFICE_HASH",        
+            "UserApi__ApiKey": "API_BACKOFFICE_HASH",
+            "FramesOutputPath": "APPLICATION_DIRECTORY_MOUNTPATH",
             "OpenTelemetry__Url": "GRAFANA_OTLP_URL"        
         }
       variables_mapping: |
