@@ -23,7 +23,7 @@ public class MongoProcessingRepository : IProcessingRepository
 
     public async Task UpdateProcessing(string processingId, ProcessingStatus status, string? zipBlobUrl = null)
     {
-        var filter = Builders<BsonDocument>.Filter.Eq("ProcessingId", processingId);
+        var filter = Builders<BsonDocument>.Filter.Eq("Id", processingId);
         var update = Builders<BsonDocument>.Update
             .Set("ZipBlobUrl", zipBlobUrl)
             .Set("Status", status.ToString());

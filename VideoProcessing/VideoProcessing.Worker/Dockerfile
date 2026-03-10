@@ -35,7 +35,8 @@ ENV \
 RUN apk add --no-cache \
     icu-data-full \
     icu-libs \
-    curl
+    curl \
+    ffmpeg
 
 COPY --from=publish /app/publish .
 

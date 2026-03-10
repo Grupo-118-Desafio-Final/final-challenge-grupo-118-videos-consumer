@@ -56,6 +56,9 @@ secret:
     video-consumer-azureblob-connectionstring: "${AzureBlob__ConnectionString}"
     video-consumer-azureblob-containername: "${AzureBlob__ContainerName}"
     video-consumer-rabbitmq-connectionstring: "${RabbitMqSettings__ConnectionUri}"
+    video-consumer-userapi-baseurl: "${UserApi__BaseUrl}"
+    video-consumer-userapi-apikey: "${UserApi__ApiKey}"
+    otlp-url: "${OpenTelemetry__Url}"
 
   envVars:
     - name: MongoDB__ConnectionString
@@ -68,6 +71,12 @@ secret:
       secretKey: video-consumer-azureblob-containername
     - name: RabbitMqSettings__ConnectionUri
       secretKey: video-consumer-rabbitmq-connectionstring
+    - name: UserApi__BaseUrl 
+      secretKey: video-consumer-userapi-baseurl
+    - name: UserApi__ApiKey
+      secretKey: video-consumer-userapi-apikey
+    - name: OpenTelemetry__Url
+      secretKey: otlp-url
 
 nodeSelector: {}
 

@@ -37,7 +37,10 @@ jobs:
             "AzureBlob__ConnectionString":"APPLICATION_BLOBSTORAGE_CONNECTIONSTRING",
             "AzureBlob__ContainerName":"APPLICATION_BLOBSTORAGE_CONTAINERNAME",
             "MongoDB__ConnectionString":"APPLICATION_MONGODB_CONNECTIONSTRING",
-            "MongoDB__Database":"APPLICATION_MONGODB_DATABASENAME"
+            "MongoDB__Database":"APPLICATION_MONGODB_DATABASENAME",
+            "UserApi__BaseUrl": "API_BACKOFFICE_BASEURL",
+            "UserApi__ApiKey": "API_BACKOFFICE_HASH",        
+            "OpenTelemetry__Url": "GRAFANA_OTLP_URL"        
         }
       variables_mapping: |
         {
