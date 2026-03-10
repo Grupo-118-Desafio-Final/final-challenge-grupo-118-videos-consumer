@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -19,6 +20,7 @@ public class VideoProcessedMessageProducer : IVideoProcessedMessageProducer
         _settings = options.Value;
     }
 
+    [ExcludeFromCodeCoverage]
     public async Task PublishAsync(NotificationEvent message)
     {
         var connection = await _factory.CreateAsync();

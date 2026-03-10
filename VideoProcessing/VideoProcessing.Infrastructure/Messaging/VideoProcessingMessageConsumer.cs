@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -26,6 +27,7 @@ public class VideoProcessingMessageConsumer : BackgroundService
         _settings = options.Value;
     }
 
+    [ExcludeFromCodeCoverage]
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
