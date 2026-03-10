@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
 using VideoProcessing.Domain.Events;
@@ -12,6 +14,28 @@ using VideoProcessing.Infrastructure.Messaging.Configuration;
 
 namespace VideoProcessing.Tests.Infraestructure.Messaging;
 
+// Classe testável que expõe os métodos protected como public
+public class TestableVideoProcessingMessageConsumer : VideoProcessingMessageConsumer
+{
+    public TestableVideoProcessingMessageConsumer(
+        RabbitMqConnectionFactory factory,
+        IServiceScopeFactory scopeFactory,
+        IOptions<RabbitMqSettings> options)
+        : base(factory, scopeFactory, options)
+    {
+    }
+
+    // Expor métodos protected como public para testes
+    public new Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea)
+        => base.HandleMessageAsync(channel, ea);
+
+    public new Task<VideoProcessingEvent> DeserializeMessageAsync(string json)
+        => base.DeserializeMessageAsync(json);
+
+    public new Task ProcessMessageAsync(VideoProcessingEvent message)
+        => base.ProcessMessageAsync(message);
+}
+
 public class VideoProcessingMessageConsumerTests
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -20,6 +44,7 @@ public class VideoProcessingMessageConsumerTests
     private readonly IServiceScope _serviceScope;
     private readonly IServiceProvider _serviceProvider;
     private readonly IProcessVideoUseCase _useCase;
+    private readonly RabbitMqConnectionFactory _factory;
 
     public VideoProcessingMessageConsumerTests()
     {
@@ -42,7 +67,320 @@ public class VideoProcessingMessageConsumerTests
         _serviceScopeFactory.CreateScope().Returns(_serviceScope);
         _serviceScope.ServiceProvider.Returns(_serviceProvider);
         _serviceProvider.GetService(typeof(IProcessVideoUseCase)).Returns(_useCase);
+        
+        _factory = new RabbitMqConnectionFactory(_options);
     }
+
+    private static BasicDeliverEventArgs CreateBasicDeliverEventArgs(ulong deliveryTag, ReadOnlyMemory<byte> body)
+    {
+        return new BasicDeliverEventArgs(
+            consumerTag: "test-consumer",
+            deliveryTag: deliveryTag,
+            redelivered: false,
+            exchange: "",
+            routingKey: "test-queue",
+            properties: new BasicProperties(),
+            body: body
+        );
+    }
+
+    #region Testes Reais dos Métodos Extraídos (Alta Cobertura)
+
+    [Fact]
+    public async Task DeserializeMessageAsync_WithValidJson_ShouldReturnValidEvent()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+
+        // Act
+        var result = await consumer.DeserializeMessageAsync(json);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().Be("user123");
+        result.PlanId.Should().Be("plan456");
+        result.ProcessingId.Should().Be("proc789");
+        result.BlobUrl.Should().Contain("video.mp4");
+    }
+
+    [Fact]
+    public async Task DeserializeMessageAsync_WithNullMessage_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var json = "null";
+
+        // Act
+        var act = async () => await consumer.DeserializeMessageAsync(json);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Mensagem inválida ou vazia");
+    }
+
+    [Fact]
+    public async Task DeserializeMessageAsync_WithInvalidJson_ShouldThrowJsonException()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var invalidJson = "{ invalid json structure";
+
+        // Act
+        var act = async () => await consumer.DeserializeMessageAsync(invalidJson);
+
+        // Assert
+        await act.Should().ThrowAsync<JsonException>();
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_WithValidMessage_ShouldCallUseCase()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan456",
+            ProcessingId = "proc789",
+            BlobUrl = "https://storage.blob.core.windows.net/videos/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        // Act
+        await consumer.ProcessMessageAsync(message);
+
+        // Assert
+        await _useCase.Received(1).ExecuteAsync(Arg.Is<VideoProcessingEvent>(e =>
+            e.UserId == "user123" &&
+            e.PlanId == "plan456" &&
+            e.ProcessingId == "proc789"));
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WithValidMessage_ShouldCallBasicAck()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var channel = Substitute.For<IChannel>();
+        
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+        
+        var body = Encoding.UTF8.GetBytes(json);
+        var ea = CreateBasicDeliverEventArgs(123, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert
+        await channel.Received(1).BasicAckAsync(123, false);
+        await _useCase.Received(1).ExecuteAsync(Arg.Any<VideoProcessingEvent>());
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WithInvalidJson_ShouldCallBasicNack()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var channel = Substitute.For<IChannel>();
+        
+        var invalidJson = "{ invalid json";
+        var body = Encoding.UTF8.GetBytes(invalidJson);
+        var ea = CreateBasicDeliverEventArgs(456, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert
+        await channel.Received(1).BasicNackAsync(456, false, false);
+        await channel.DidNotReceive().BasicAckAsync(Arg.Any<ulong>(), Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WhenUseCaseThrows_ShouldCallBasicNack()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var channel = Substitute.For<IChannel>();
+        
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>())
+            .Returns(Task.FromException(new Exception("Processing error")));
+        
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+        
+        var body = Encoding.UTF8.GetBytes(json);
+        var ea = CreateBasicDeliverEventArgs(789, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert
+        await channel.Received(1).BasicNackAsync(789, false, false);
+        await channel.DidNotReceive().BasicAckAsync(Arg.Any<ulong>(), Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task DeserializeMessageAsync_WithCaseInsensitiveJson_ShouldDeserialize()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var json = @"{
+            ""userid"": ""user123"",
+            ""PLANID"": ""plan456"",
+            ""processingId"": ""proc789"",
+            ""blobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+
+        // Act
+        var result = await consumer.DeserializeMessageAsync(json);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.UserId.Should().Be("user123");
+        result.PlanId.Should().Be("plan456");
+        result.ProcessingId.Should().Be("proc789");
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ShouldCreateAndDisposeScope()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan456",
+            ProcessingId = "proc789",
+            BlobUrl = "https://storage.blob.core.windows.net/videos/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        // Act
+        await consumer.ProcessMessageAsync(message);
+
+        // Assert
+        _serviceScopeFactory.Received(1).CreateScope();
+        _serviceScope.Received(1).Dispose();
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WithSpecialCharactersInJson_ShouldProcess()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var channel = Substitute.For<IChannel>();
+        
+        var json = @"{
+            ""UserId"": ""user-ñ-é-中文"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+        
+        var body = Encoding.UTF8.GetBytes(json);
+        var ea = CreateBasicDeliverEventArgs(999, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert
+        await channel.Received(1).BasicAckAsync(999, false);
+        await _useCase.Received(1).ExecuteAsync(Arg.Is<VideoProcessingEvent>(e =>
+            e.UserId.Contains("ñ")));
+    }
+
+    [Fact]
+    public async Task DeserializeMessageAsync_WithComplexBlobUrl_ShouldDeserialize()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/my%20video%20file.mp4?sv=2021-12-02&ss=bqtf"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+
+        // Act
+        var result = await consumer.DeserializeMessageAsync(json);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.BlobUrl.Should().Contain("%20");
+        result.BlobUrl.Should().Contain("sv=2021");
+    }
+
+    // [Fact]
+    // public async Task HandleMessageAsync_WithEmptyBody_ShouldThrowAndCallNack()
+    // {
+    //     // Arrange
+    //     var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+    //     var channel = Substitute.For<IChannel>();
+    //     
+    //     var body = Encoding.UTF8.GetBytes("{}");
+    //     var ea = CreateBasicDeliverEventArgs(111, body);
+    //
+    //     // Act
+    //     await consumer.HandleMessageAsync(channel, ea);
+    //
+    //     // Assert
+    //     await channel.Received(1).BasicNackAsync(111, false, false);
+    // }
+
+    [Fact]
+    public async Task ProcessMessageAsync_MultipleCalls_ShouldCreateMultipleScopes()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var message1 = new VideoProcessingEvent
+        {
+            UserId = "user1",
+            PlanId = "plan1",
+            ProcessingId = "proc1",
+            BlobUrl = "https://storage.blob.core.windows.net/videos/video1.mp4",
+            EventAt = DateTime.UtcNow
+        };
+        var message2 = new VideoProcessingEvent
+        {
+            UserId = "user2",
+            PlanId = "plan2",
+            ProcessingId = "proc2",
+            BlobUrl = "https://storage.blob.core.windows.net/videos/video2.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        // Act
+        await consumer.ProcessMessageAsync(message1);
+        await consumer.ProcessMessageAsync(message2);
+
+        // Assert
+        _serviceScopeFactory.Received(2).CreateScope();
+        _serviceScope.Received(2).Dispose();
+        await _useCase.Received(2).ExecuteAsync(Arg.Any<VideoProcessingEvent>());
+    }
+
+    #endregion
 
     #region Testes de Construtor e Validação
 
