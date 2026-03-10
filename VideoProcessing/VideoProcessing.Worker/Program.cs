@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using Azure.Storage.Blobs;
 using MongoDB.Driver;
+using StandardDependencies.Injection;
+using StandardDependencies.Models;
 using VideoProcessing.Application.UseCases;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
@@ -17,6 +19,13 @@ public class Program
     {
         var builder = Host.CreateApplicationBuilder(args);
 
+        var openTelemetryOptions = builder
+            .Configuration
+            .GetSection(OpenTelemetryOptions.SectionName)
+            .Get<OpenTelemetryOptions>();
+
+        builder.ConfigureCommonElements(openTelemetryOptions);
+        
         builder.Services.AddHostedService<VideoProcessingMessageConsumer>();
 
         builder.Services.Configure<RabbitMqSettings>(
