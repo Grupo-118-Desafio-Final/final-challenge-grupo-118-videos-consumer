@@ -1,0 +1,30 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop, feature/consumer ]
+
+permissions:
+  pull-requests: write  # Required for PR comments
+  contents: write
+  issues: write  # Optional, for issue comments
+
+jobs:
+  ci:
+    uses: Grupo-118-Desafio-Final/final-challenge-grupo-118-template-pipeline/.github/workflows/dotnet-ci-template.yml@main
+    with:
+      sonar-project-key: 'final-challenge-grupo-118-videos-consumer'
+      sonar-organization: 'grupo-118-desafio-final'
+      solution-path: './VideoProcessing/VideoProcessing.sln'
+      test-projects: './VideoProcessing/VideoProcessing.sln'
+      dotnet-version: '8.0.x'
+      build-configuration: 'Release'
+      dockerfile-path: './VideoProcessing/VideoProcessing.Worker/Dockerfile'
+      image-name: 'final-challenge-grupo-118-videos-consumer'
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+      ACR_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}

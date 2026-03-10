@@ -1,0 +1,84 @@
+replicaCount: 1
+
+image:
+  repository: ${DOCKER_REGISTRY}
+  imageName: final-challenge-grupo-118-videos-consumer
+  tag: "${POC_IMAGE_TAG}"  # Will be set via --set or CI/CD
+  pullPolicy: IfNotPresent
+  
+imagePullSecrets:
+  - name: final-challenge-grupo-118-videos-consumer-acr-secret
+
+acrCredentials:
+  enabled: true
+  registry: "${DOCKER_REGISTRY}"
+  username: "${ACR_USERNAME}"  # Will be set via --set or CI/CD
+  password: "${ACR_PASSWORD}"  # Will be set via --set or CI/CD
+  
+nameOverride: "final-challenge-grupo-118-videos-consumer"
+fullnameOverride: "final-challenge-grupo-118-videos-consumer"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "final-challenge-grupo-118-videos-consumer-sa"
+  
+service: {}
+
+
+internalIngress:
+  enabled: false
+  
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+    
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+  
+configMap:
+  enabled: false
+  
+secret:
+  enabled: true
+  name: final-challenge-grupo-118-videos-consumer
+  annotations: {}
+  data:
+    video-consumer-mongo-connectionstring: "${MongoDB__ConnectionString}"
+    video-consumer-mongo-database: "${MongoDB__Database}"
+    video-consumer-azureblob-connectionstring: "${AzureBlob__ConnectionString}"
+    video-consumer-azureblob-containername: "${AzureBlob__ContainerName}"
+    video-consumer-rabbitmq-connectionstring: "${RabbitMqSettings__ConnectionUri}"
+
+  envVars:
+    - name: MongoDB__ConnectionString
+      secretKey: video-consumer-mongo-connectionstring
+    - name: MongoDB__Database
+      secretKey: video-consumer-mongo-database
+    - name: AzureBlob__ConnectionString
+      secretKey: video-consumer-azureblob-connectionstring
+    - name: AzureBlob__ContainerName
+      secretKey: video-consumer-azureblob-containername
+    - name: RabbitMqSettings__ConnectionUri
+      secretKey: video-consumer-rabbitmq-connectionstring
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+persistence:
+    enabled: true
+    size: 5gi
+    accessModes:
+      - ReadWriteMany
+  storageClassName: azurefile-csi
+  mountPath: /app/data
