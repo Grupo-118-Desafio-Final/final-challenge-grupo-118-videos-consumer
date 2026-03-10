@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using VideoProcessing.Infrastructure.Messaging.Configuration;
+
+namespace VideoProcessing.Infrastructure.Messaging.Configuration;
 
 public class RabbitMqConnectionFactory
 {
@@ -40,7 +41,9 @@ public class RabbitMqConnectionFactory
             catch (RabbitMQ.Client.Exceptions.AuthenticationFailureException authEx)
             {
                 // Authentication failed - these credentials or virtual host are likely incorrect.
-                throw new InvalidOperationException("RabbitMQ authentication failed. Check Host, UserName, Password and VirtualHost configuration.", authEx);
+                throw new InvalidOperationException(
+                    "RabbitMQ authentication failed. Check Host, UserName, Password and VirtualHost configuration.",
+                    authEx);
             }
             catch (Exception)
             {

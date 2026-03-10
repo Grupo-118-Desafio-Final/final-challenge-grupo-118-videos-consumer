@@ -9,6 +9,8 @@ using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Infrastructure.Messaging.Configuration;
 
+namespace VideoProcessing.Infrastructure.Messaging;
+
 public class VideoProcessingMessageConsumer : BackgroundService
 {
     private static readonly JsonSerializerOptions JsonOptions =new() { PropertyNameCaseInsensitive = true };
