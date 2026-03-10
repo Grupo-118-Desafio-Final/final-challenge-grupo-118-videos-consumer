@@ -13,6 +13,7 @@ public class FfmpegFrameExtractor : IFrameExtractor
     private readonly string _ffprobePath;
     private readonly int _framesToExtract;
     private static readonly TimeSpan ProcessTimeout = TimeSpan.FromMinutes(2);
+    private readonly string? _outputBasePath;
 
     public FfmpegFrameExtractor(
         ILogger<FfmpegFrameExtractor> logger,
@@ -32,6 +33,15 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
         ValidateBinaryAvailable(_ffmpegPath, "ffmpeg");
         ValidateBinaryAvailable(_ffprobePath, "ffprobe");
+
+        var configuredPath = configuration["FramesOutputPath"];
+
+        var basePath = Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+
+        Directory.CreateDirectory(basePath);
+        _outputBasePath = basePath;
     }
 
     public async Task<List<string>> ExtractFramesAsync(string videoPath, int qualityImage)
@@ -41,10 +51,8 @@ public class FfmpegFrameExtractor : IFrameExtractor
             if (!File.Exists(videoPath))
                 throw new FileNotFoundException("Video file not found", videoPath);
 
-            var outputDir = Path.Combine(
-                Path.GetTempPath(),
-                "frames",
-                Guid.NewGuid().ToString("N"));
+            var baseDir = _outputBasePath ?? Path.Combine(Path.GetTempPath(), "frames");
+            var outputDir = Path.Combine(baseDir, Guid.NewGuid().ToString("N"));
 
             Directory.CreateDirectory(outputDir);
 
