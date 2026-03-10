@@ -20,6 +20,12 @@ public class MongoProcessingRepository : IProcessingRepository
         var database = client.GetDatabase(databaseName);
         _collection = database.GetCollection<BsonDocument>(collectionName);
     }
+    
+    // Novo construtor testável
+    public MongoProcessingRepository(IMongoCollection<BsonDocument> collection)
+    {
+        _collection = collection ?? throw new ArgumentNullException(nameof(collection));
+    }
 
     public async Task UpdateProcessing(string processingId, ProcessingStatus status, string? zipBlobUrl = null)
     {
