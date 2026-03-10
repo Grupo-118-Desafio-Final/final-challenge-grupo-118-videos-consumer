@@ -42,7 +42,6 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
                 throw new ArgumentException("planId cannot be null or empty", nameof(message.PlanId));
 
             var userPlan = await _planProvider.GetPlanAsync(message.PlanId);
-            //var userPlan = new UserPlanDto("Basic", 12, 480, "", "", "");
 
             var videoLocalPath = await _downloader.DownloadAsync(message.BlobUrl);
 
