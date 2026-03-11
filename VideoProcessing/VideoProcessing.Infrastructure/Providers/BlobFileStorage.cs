@@ -33,7 +33,7 @@ public class BlobFileStorage : IFileStorage
         await containerClient.CreateIfNotExistsAsync();
 
         var blobName = Path.GetFileName(filePath) ?? Guid.NewGuid().ToString();
-        var blobPath = $"{userId}/{processingId}/{blobName}";
+        var blobPath = $"/uploads/{userId}/{processingId}/{blobName}";
         var blobClient = containerClient.GetBlobClient(blobPath);
 
         using var stream = File.OpenRead(filePath);
