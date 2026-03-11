@@ -42,7 +42,7 @@ public class MongoProcessingRepository : IProcessingRepository
 
         var update = Builders<BsonDocument>.Update
             .Set("zipBlobUrl", zipBlobUrl)
-            .Set("status", status.ToString());
+            .Set("processingStatus", status.ToString());
 
         var result = await _collection.UpdateOneAsync(filter, update);
 
