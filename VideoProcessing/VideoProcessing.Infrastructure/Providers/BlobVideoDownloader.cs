@@ -1,5 +1,6 @@
 using Azure;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using VideoProcessing.Domain.Ports.On;
 
@@ -9,11 +10,22 @@ public class BlobVideoDownloader : IVideoDownloader
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger<BlobVideoDownloader> _logger;
+    private readonly string? _outputBasePath;
 
-    public BlobVideoDownloader(BlobServiceClient blobServiceClient, ILogger<BlobVideoDownloader> logger)
+    public BlobVideoDownloader(BlobServiceClient blobServiceClient, ILogger<BlobVideoDownloader> logger,
+        IConfiguration configuration)
     {
         _blobServiceClient = blobServiceClient;
         _logger = logger;
+
+        var configuredPath = configuration["VideoDownloadOutputPath"];
+
+        var basePath = Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+
+        Directory.CreateDirectory(basePath);
+        _outputBasePath = basePath;
     }
 
     public async Task<string> DownloadAsync(string blobUrl)
@@ -26,7 +38,8 @@ public class BlobVideoDownloader : IVideoDownloader
         var segments = uri.AbsolutePath.Trim('/').Split('/', 3);
 
         if (segments.Length < 2 || string.IsNullOrWhiteSpace(segments[0]) || string.IsNullOrWhiteSpace(segments[1]))
-            throw new ArgumentException("blobUrl must contain container and blob name (e.g. '/container/blob')", nameof(blobUrl));
+            throw new ArgumentException("blobUrl must contain container and blob name (e.g. '/container/blob')",
+                nameof(blobUrl));
 
         string containerName;
         string blobName;
@@ -48,21 +61,26 @@ public class BlobVideoDownloader : IVideoDownloader
         var blobClient = containerClient.GetBlobClient(blobName);
 
         var ext = Path.GetExtension(blobName);
-        var tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{ext}");
+
+        // TODO: Ajustar logica paga considerar o Path como o "a "pasta" antes do id do usuario e upload
+        var tempFile = Path.Combine(_outputBasePath, $"{Guid.NewGuid()}{ext}");
 
         try
         {
             var containerExists = await containerClient.ExistsAsync();
             if (!containerExists)
             {
-                _logger.LogError("Container '{ContainerName}' does not exist for blobUrl {BlobUrl}", containerName, blobUrl);
-                throw new InvalidOperationException($"Container '{containerName}' does not exist for blobUrl '{blobUrl}'.");
+                _logger.LogError("Container '{ContainerName}' does not exist for blobUrl {BlobUrl}", containerName,
+                    blobUrl);
+                throw new InvalidOperationException(
+                    $"Container '{containerName}' does not exist for blobUrl '{blobUrl}'.");
             }
 
             var blobExists = await blobClient.ExistsAsync();
             if (!blobExists)
             {
-                _logger.LogError("Blob '{BlobName}' not found in container '{ContainerName}' for blobUrl {BlobUrl}", blobName, containerName, blobUrl);
+                _logger.LogError("Blob '{BlobName}' not found in container '{ContainerName}' for blobUrl {BlobUrl}",
+                    blobName, containerName, blobUrl);
                 throw new FileNotFoundException($"Blob '{blobName}' not found in container '{containerName}'.");
             }
 

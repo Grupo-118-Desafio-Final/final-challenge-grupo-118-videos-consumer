@@ -66,7 +66,7 @@ public class UserPlanProviderTests
 
         // Assert
         messageHandler.LastRequestUri.Should().NotBeNull();
-        messageHandler.LastRequestUri!.ToString().Should().Contain($"/plan/GetById?id={planId}");
+        messageHandler.LastRequestUri!.ToString().Should().Contain($"/plan/{planId}");
     }
 
     [Fact]

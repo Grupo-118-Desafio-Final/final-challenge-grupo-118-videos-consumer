@@ -1,13 +1,18 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace VideoProcessing.Domain.Events;
 
 [ExcludeFromCodeCoverage]
 public class NotificationEvent
 {
-    public bool IsSuccess { get; set; }
-    public string UserId { get; set; }
-    public string Message { get; set; }
+    [JsonPropertyName(("isSuccess"))] public bool IsSuccess { get; set; }
+    [JsonPropertyName(("userId"))] public string UserId { get; set; }
+
+    [JsonPropertyName(("message"))] public string Message { get; set; }
+
+    [JsonPropertyName(("exceptionMessage"))]
     public string ExceptionMessage { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
+
+    [JsonPropertyName(("createdAt"))] public DateTimeOffset CreatedAt { get; set; }
 }

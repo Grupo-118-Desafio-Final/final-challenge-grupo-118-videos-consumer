@@ -103,7 +103,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-123";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processing;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/file.zip";
 
@@ -114,7 +114,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -123,7 +123,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-456";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/frames/output.zip";
 
@@ -134,7 +134,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -143,7 +143,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-789";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Failed;
 
         // Act
@@ -153,7 +153,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -165,7 +165,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = $"proc-{status}";
+        var processingId = Guid.NewGuid().ToString();
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/file.zip";
 
         // Act
@@ -175,7 +175,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -188,7 +188,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-with-zip";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/frames.zip";
 
@@ -199,7 +199,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -208,7 +208,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-without-zip";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act
@@ -218,7 +218,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -227,7 +227,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-default";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act - Usando o valor padrão do parâmetro opcional
@@ -237,7 +237,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -246,7 +246,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-complex";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/folder/frames-2024.zip?sv=2021-12-02&ss=bqtf";
 
@@ -257,7 +257,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -270,7 +270,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "valid-processing-id-123";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act
@@ -280,7 +280,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -300,46 +300,34 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task UpdateProcessing_WithLongProcessingId_ShouldCallUpdateOneAsync()
+    public async Task UpdateProcessing_WithInvalidGuid_ShouldThrowFormatException()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = new string('a', 500); // 500 caracteres
+        var processingId = "not-a-guid";
         var status = ProcessingStatus.Processing;
 
-        // Act
-        await repository.UpdateProcessing(processingId, status);
-
-        // Assert
-        await _mockCollection.Received(1).UpdateOneAsync(
-            Arg.Any<FilterDefinition<BsonDocument>>(),
-            Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
-            Arg.Any<CancellationToken>());
+        // Act & Assert
+        await Assert.ThrowsAsync<FormatException>(() => 
+            repository.UpdateProcessing(processingId, status));
     }
 
     [Fact]
-    public async Task UpdateProcessing_WithSpecialCharactersInProcessingId_ShouldCallUpdateOneAsync()
+    public async Task UpdateProcessing_WithEmptyString_ShouldThrowFormatException()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-123-ñ-é-中文";
+        var processingId = "";
         var status = ProcessingStatus.Processing;
 
-        // Act
-        await repository.UpdateProcessing(processingId, status);
-
-        // Assert
-        await _mockCollection.Received(1).UpdateOneAsync(
-            Arg.Any<FilterDefinition<BsonDocument>>(),
-            Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
-            Arg.Any<CancellationToken>());
+        // Act & Assert
+        await Assert.ThrowsAsync<FormatException>(() => 
+            repository.UpdateProcessing(processingId, status));
     }
 
     #endregion
@@ -353,15 +341,15 @@ public class MongoProcessingRepositoryTests
         var repository = new MongoProcessingRepository(_mockCollection);
 
         // Act
-        await repository.UpdateProcessing("proc-1", ProcessingStatus.Processing);
-        await repository.UpdateProcessing("proc-2", ProcessingStatus.Processed, "url1");
-        await repository.UpdateProcessing("proc-3", ProcessingStatus.Failed);
+        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Processing);
+        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Processed, "url1");
+        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Failed);
 
         // Assert
         await _mockCollection.Received(3).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -370,7 +358,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-update-twice";
+        var processingId = Guid.NewGuid().ToString();
 
         // Act
         await repository.UpdateProcessing(processingId, ProcessingStatus.Processing);
@@ -380,7 +368,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(2).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -389,30 +377,11 @@ public class MongoProcessingRepositoryTests
     #region Testes de Edge Cases
 
     [Fact]
-    public async Task UpdateProcessing_WithEmptyProcessingId_ShouldCallUpdateOneAsync()
-    {
-        // Arrange
-        var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "";
-        var status = ProcessingStatus.Processing;
-
-        // Act
-        await repository.UpdateProcessing(processingId, status);
-
-        // Assert - Mesmo com string vazia, deve chamar o método
-        await _mockCollection.Received(1).UpdateOneAsync(
-            Arg.Any<FilterDefinition<BsonDocument>>(),
-            Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
     public async Task UpdateProcessing_WithEmptyZipBlobUrl_ShouldCallUpdateOneAsync()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection);
-        var processingId = "proc-empty-url";
+        var processingId = Guid.NewGuid().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "";
 
@@ -423,7 +392,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(1).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 
@@ -437,7 +406,7 @@ public class MongoProcessingRepositoryTests
         // Act - Simular chamadas concorrentes
         for (int i = 0; i < 10; i++)
         {
-            var processingId = $"proc-{i}";
+            var processingId = Guid.NewGuid().ToString();
             tasks.Add(repository.UpdateProcessing(processingId, ProcessingStatus.Processing));
         }
 
@@ -447,7 +416,7 @@ public class MongoProcessingRepositoryTests
         await _mockCollection.Received(10).UpdateOneAsync(
             Arg.Any<FilterDefinition<BsonDocument>>(),
             Arg.Any<UpdateDefinition<BsonDocument>>(),
-            Arg.Any<UpdateOptions>(),
+            null,
             Arg.Any<CancellationToken>());
     }
 

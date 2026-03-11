@@ -16,7 +16,7 @@ public class ZipService : IZipService
 
         var configuredPath = configuration["ZipsOutputPath"];
 
-
+        // TODO: Ajustar logica paga considerar o Path como o "a "pasta" antes do id do usuario e upload
         var basePath = Path.IsPathRooted(configuredPath)
             ? configuredPath
             : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
@@ -24,8 +24,8 @@ public class ZipService : IZipService
         Directory.CreateDirectory(basePath);
         _outputBasePath = basePath;
         _logger.LogInformation("Zips will be written to configured path: {Path}", _outputBasePath);
-
     }
+
     public async Task<string> CreateZipAsync(List<string> files)
     {
         if (files == null) throw new ArgumentNullException(nameof(files));
@@ -53,6 +53,7 @@ public class ZipService : IZipService
                 await fileStream.CopyToAsync(entryStream);
             }
         }
+
         return zipPath;
     }
 }

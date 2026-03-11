@@ -20,7 +20,7 @@ public class MongoProcessingRepository : IProcessingRepository
         var database = client.GetDatabase(databaseName);
         _collection = database.GetCollection<BsonDocument>(collectionName);
     }
-    
+
     // Novo construtor testável
     public MongoProcessingRepository(IMongoCollection<BsonDocument> collection)
     {
@@ -29,10 +29,12 @@ public class MongoProcessingRepository : IProcessingRepository
 
     public async Task UpdateProcessing(string processingId, ProcessingStatus status, string? zipBlobUrl = null)
     {
-        var filter = Builders<BsonDocument>.Filter.Eq("Id", processingId);
+        var guid = Guid.Parse(processingId);
+        var filter = Builders<BsonDocument>.Filter.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard));
+
         var update = Builders<BsonDocument>.Update
-            .Set("ZipBlobUrl", zipBlobUrl)
-            .Set("Status", status.ToString());
+            .Set("zipBlobUrl", zipBlobUrl)
+            .Set("status", status.ToString());
 
         await _collection.UpdateOneAsync(filter, update);
     }
