@@ -60,7 +60,9 @@ secret:
     video-consumer-rabbitmq-connectionstring: "${RabbitMqSettings__ConnectionUri}"
     video-consumer-userapi-baseurl: "${UserApi__BaseUrl}"
     video-consumer-userapi-apikey: "${UserApi__ApiKey}"
-    video-consumer-basepath: "${FramesOutputPath}"
+    video-consumer-frames-path: "${FramesOutputPath}"
+    video-consumer-zips-path: "${ZipsOutputPath}"
+    video-consumer-videodownload-path: "${VideoDownloadOutputPath}"    
     otlp-url: "${OpenTelemetry__Url}"
 
   envVars:
@@ -78,10 +80,16 @@ secret:
       secretKey: video-consumer-userapi-baseurl
     - name: UserApi__ApiKey
       secretKey: video-consumer-userapi-apikey
+
+    - name: FramesOutputPath
+      secretKey: video-consumer-frames-path
+    - name: ZipsOutputPath
+      secretKey: video-consumer-zips-path
+    - name: VideoDownloadOutputPath
+      secretKey: video-consumer-videodownload-path
+
     - name: OpenTelemetry__Url
       secretKey: otlp-url
-    - name: FramesOutputPath
-      secretKey: video-consumer-basepath
 
 nodeSelector: {}
 
