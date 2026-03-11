@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using NSubstitute;
@@ -12,10 +13,13 @@ public class MongoProcessingRepositoryTests
 {
     private readonly IConfiguration _configuration;
     private readonly IMongoCollection<BsonDocument> _mockCollection;
+    private readonly ILogger<MongoProcessingRepository> _logger;
 
     public MongoProcessingRepositoryTests()
     {
         _configuration = Substitute.For<IConfiguration>();
+        _logger = Substitute.For<ILogger<MongoProcessingRepository>>();
+
         _configuration["MongoDb:ConnectionString"].Returns("mongodb://localhost:27017");
         _configuration["MongoDb:Database"].Returns("testdb");
         _configuration["MongoDb:Collection"].Returns("testcollection");
@@ -29,7 +33,7 @@ public class MongoProcessingRepositoryTests
     public void Constructor_WithConfiguration_ShouldReadMongoDbConnectionString()
     {
         // Act
-        var repository = new MongoProcessingRepository(_configuration);
+        var repository = new MongoProcessingRepository(_configuration, _logger);
 
         // Assert
         _ = _configuration.Received(1)["MongoDb:ConnectionString"];
@@ -40,7 +44,7 @@ public class MongoProcessingRepositoryTests
     public void Constructor_WithConfiguration_ShouldReadMongoDbDatabase()
     {
         // Act
-        var repository = new MongoProcessingRepository(_configuration);
+        var repository = new MongoProcessingRepository(_configuration, _logger);
 
         // Assert
         _ = _configuration.Received(1)["MongoDb:Database"];
@@ -51,7 +55,7 @@ public class MongoProcessingRepositoryTests
     public void Constructor_WithConfiguration_ShouldReadMongoDbCollection()
     {
         // Act
-        var repository = new MongoProcessingRepository(_configuration);
+        var repository = new MongoProcessingRepository(_configuration, _logger);
 
         // Assert
         _ = _configuration.Received(1)["MongoDb:Collection"];
@@ -62,7 +66,7 @@ public class MongoProcessingRepositoryTests
     public void Constructor_WithConfiguration_ShouldCreateMongoClientWithConnectionString()
     {
         // Arrange & Act
-        var repository = new MongoProcessingRepository(_configuration);
+        var repository = new MongoProcessingRepository(_configuration, _logger);
 
         // Assert
         repository.Should().NotBeNull();
@@ -313,7 +317,7 @@ public class MongoProcessingRepositoryTests
         var status = ProcessingStatus.Processing;
 
         // Act & Assert
-        await Assert.ThrowsAsync<FormatException>(() => 
+        await Assert.ThrowsAsync<FormatException>(() =>
             repository.UpdateProcessing(processingId, status));
     }
 
@@ -326,7 +330,7 @@ public class MongoProcessingRepositoryTests
         var status = ProcessingStatus.Processing;
 
         // Act & Assert
-        await Assert.ThrowsAsync<FormatException>(() => 
+        await Assert.ThrowsAsync<FormatException>(() =>
             repository.UpdateProcessing(processingId, status));
     }
 
@@ -422,4 +426,3 @@ public class MongoProcessingRepositoryTests
 
     #endregion
 }
-
