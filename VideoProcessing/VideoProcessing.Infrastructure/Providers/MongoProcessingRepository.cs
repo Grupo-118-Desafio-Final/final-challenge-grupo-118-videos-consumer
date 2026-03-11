@@ -26,8 +26,9 @@ public class MongoProcessingRepository : IProcessingRepository
     }
 
     // Novo construtor testável
-    public MongoProcessingRepository(IMongoCollection<BsonDocument> collection)
+    public MongoProcessingRepository(IMongoCollection<BsonDocument> collection, ILogger<MongoProcessingRepository> logger)
     {
+        _logger = logger;
         _collection = collection ?? throw new ArgumentNullException(nameof(collection));
     }
 
