@@ -42,8 +42,7 @@ public class MongoProcessingRepository : IProcessingRepository
         var builder = Builders<BsonDocument>.Filter;
         var filter = builder.Or(
             builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.CSharpLegacy)),
-            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard)),
-            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Unspecified))
+            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard))
         );
 
         var update = Builders<BsonDocument>.Update
