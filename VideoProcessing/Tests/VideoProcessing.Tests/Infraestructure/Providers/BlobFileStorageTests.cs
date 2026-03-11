@@ -164,7 +164,7 @@ public class BlobFileStorageTests : IDisposable
         // Arrange
         var userId = "user123";
         var processingId = "processing456";
-        var expectedBlobPath = $"{userId}/{processingId}/{Path.GetFileName(_testFilePath)}";
+        var expectedBlobPath = $"/uploads/{userId}/{processingId}/{Path.GetFileName(_testFilePath)}";
         
         var containerClient = Substitute.For<BlobContainerClient>();
         var blobClient = Substitute.For<BlobClient>();
