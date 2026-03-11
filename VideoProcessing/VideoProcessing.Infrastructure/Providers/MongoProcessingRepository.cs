@@ -26,7 +26,8 @@ public class MongoProcessingRepository : IProcessingRepository
     }
 
     // Novo construtor testável
-    public MongoProcessingRepository(IMongoCollection<BsonDocument> collection, ILogger<MongoProcessingRepository> logger)
+    public MongoProcessingRepository(IMongoCollection<BsonDocument> collection,
+        ILogger<MongoProcessingRepository> logger)
     {
         _logger = logger;
         _collection = collection ?? throw new ArgumentNullException(nameof(collection));
@@ -37,7 +38,13 @@ public class MongoProcessingRepository : IProcessingRepository
         _logger.LogInformation("Updating processing with ID {ProcessingId} to status {Status}", processingId, status);
 
         var guid = Guid.Parse(processingId);
-        var filter = Builders<BsonDocument>.Filter.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard));
+        
+        var builder = Builders<BsonDocument>.Filter;
+        var filter = builder.Or(
+            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.CSharpLegacy)),
+            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard)),
+            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Unspecified))
+        );
 
         var update = Builders<BsonDocument>.Update
             .Set("zipBlobUrl", zipBlobUrl)
