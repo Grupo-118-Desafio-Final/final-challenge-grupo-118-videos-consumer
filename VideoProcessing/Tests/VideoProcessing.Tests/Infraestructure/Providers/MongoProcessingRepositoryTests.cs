@@ -107,7 +107,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processing;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/file.zip";
 
@@ -127,7 +127,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/frames/output.zip";
 
@@ -147,7 +147,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Failed;
 
         // Act
@@ -169,7 +169,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/file.zip";
 
         // Act
@@ -192,7 +192,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/frames.zip";
 
@@ -212,7 +212,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act
@@ -231,7 +231,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act - Usando o valor padrão do parâmetro opcional
@@ -250,7 +250,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/folder/frames-2024.zip?sv=2021-12-02&ss=bqtf";
 
@@ -274,7 +274,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processing;
 
         // Act
@@ -289,11 +289,11 @@ public class MongoProcessingRepositoryTests
     }
 
     [Fact]
-    public async Task UpdateProcessing_WithGuidProcessingId_ShouldCallUpdateOneAsync()
+    public async Task UpdateProcessing_WithObjectIdProcessingId_ShouldCallUpdateOneAsync()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "https://storage.blob.core.windows.net/container/file.zip";
 
@@ -309,11 +309,11 @@ public class MongoProcessingRepositoryTests
     }
 
     [Fact]
-    public async Task UpdateProcessing_WithInvalidGuid_ShouldThrowFormatException()
+    public async Task UpdateProcessing_WithInvalidObjectId_ShouldThrowFormatException()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = "not-a-guid";
+        var processingId = "not-an-objectid";
         var status = ProcessingStatus.Processing;
 
         // Act & Assert
@@ -345,9 +345,9 @@ public class MongoProcessingRepositoryTests
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
 
         // Act
-        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Processing);
-        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Processed, "url1");
-        await repository.UpdateProcessing(Guid.NewGuid().ToString(), ProcessingStatus.Failed);
+        await repository.UpdateProcessing(ObjectId.GenerateNewId().ToString(), ProcessingStatus.Processing);
+        await repository.UpdateProcessing(ObjectId.GenerateNewId().ToString(), ProcessingStatus.Processed, "url1");
+        await repository.UpdateProcessing(ObjectId.GenerateNewId().ToString(), ProcessingStatus.Failed);
 
         // Assert
         await _mockCollection.Received(3).UpdateOneAsync(
@@ -362,7 +362,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
 
         // Act
         await repository.UpdateProcessing(processingId, ProcessingStatus.Processing);
@@ -385,7 +385,7 @@ public class MongoProcessingRepositoryTests
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
-        var processingId = Guid.NewGuid().ToString();
+        var processingId = ObjectId.GenerateNewId().ToString();
         var status = ProcessingStatus.Processed;
         var zipBlobUrl = "";
 
@@ -410,7 +410,7 @@ public class MongoProcessingRepositoryTests
         // Act - Simular chamadas concorrentes
         for (int i = 0; i < 10; i++)
         {
-            var processingId = Guid.NewGuid().ToString();
+            var processingId = ObjectId.GenerateNewId().ToString();
             tasks.Add(repository.UpdateProcessing(processingId, ProcessingStatus.Processing));
         }
 

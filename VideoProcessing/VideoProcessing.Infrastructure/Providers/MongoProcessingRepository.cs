@@ -37,13 +37,8 @@ public class MongoProcessingRepository : IProcessingRepository
     {
         _logger.LogInformation("Updating processing with ID {ProcessingId} to status {Status}", processingId, status);
 
-        var guid = Guid.Parse(processingId);
-        
         var builder = Builders<BsonDocument>.Filter;
-        var filter = builder.Or(
-            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.CSharpLegacy)),
-            builder.Eq("_id", new BsonBinaryData(guid, GuidRepresentation.Standard))
-        );
+        var filter = builder.Eq("_id", ObjectId.Parse(processingId));
 
         var update = Builders<BsonDocument>.Update
             .Set("zipBlobUrl", zipBlobUrl)
