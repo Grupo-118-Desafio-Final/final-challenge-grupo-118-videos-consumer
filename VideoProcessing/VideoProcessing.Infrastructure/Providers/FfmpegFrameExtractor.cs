@@ -38,6 +38,7 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
         var configuredPath = configuration["FramesOutputPath"];
 
+        // TODO: Ajustar logica paga considerar o Path como o "a "pasta" antes do id do usuario e upload        
         var basePath = Path.IsPathRooted(configuredPath)
             ? configuredPath
             : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
@@ -78,11 +79,17 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
                 var outputFile = Path.Combine(outputDir, $"frame_{i:D3}.jpg");
 
+                // Se mappedFromResolution for true, qualityImage é uma resolução (ex: 1080)
+                // Se false, é um valor de qualidade JPEG (1-31)
+                var scaleFilter = mappedFromResolution 
+                    ? $"scale=-2:{qualityImage}" 
+                    : "scale=-2:1080"; // ou outra resolução padrão                
+                
                 var args =
                     $"-ss {timestampSeconds.ToString(CultureInfo.InvariantCulture)} " +
                     $"-i \"{videoPath}\" " +
                     $"-frames:v 1 " +
-                    $"-vf scale={qualityImage}:-1 " +
+                    $"-vf {scaleFilter} " +
                     $"-q:v {q} " +
                     $"\"{outputFile}\" -y";
 

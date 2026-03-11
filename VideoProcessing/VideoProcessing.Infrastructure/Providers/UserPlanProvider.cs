@@ -21,7 +21,7 @@ public class UserPlanProvider : IUserPlanProvider
 
     public async Task<UserPlanDto> GetPlanAsync(string planId)
     {
-        var requestUri = $"/plan/GetById?id={Uri.EscapeDataString(planId)}";
+        var requestUri = $"/plan/{Uri.EscapeDataString(planId)}";
 
         HttpResponseMessage response;
         try
