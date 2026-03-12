@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using VideoProcessing.Infrastructure.Providers;
 
 namespace VideoProcessing.Tests.Infraestructure.Providers;
@@ -8,10 +10,13 @@ public class FileSystemTests : IDisposable
     private readonly FileSystem _fileSystem;
     private readonly List<string> _tempFiles;
     private readonly List<string> _tempDirectories;
+    private readonly ILogger<FileSystem> _logger;
 
     public FileSystemTests()
     {
-        _fileSystem = new FileSystem();
+        _logger = Substitute.For<ILogger<FileSystem>>();
+
+        _fileSystem = new FileSystem(_logger);
         _tempFiles = new List<string>();
         _tempDirectories = new List<string>();
     }
