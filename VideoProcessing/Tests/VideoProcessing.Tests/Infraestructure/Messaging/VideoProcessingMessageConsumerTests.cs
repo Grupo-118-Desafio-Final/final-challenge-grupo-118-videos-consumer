@@ -66,6 +66,7 @@ public class VideoProcessingMessageConsumerTests
         _serviceScope = Substitute.For<IServiceScope>();
         _serviceProvider = Substitute.For<IServiceProvider>();
         _useCase = Substitute.For<IProcessVideoUseCase>();
+        _logger = Substitute.For<ILogger<TestableVideoProcessingMessageConsumer>>();
 
         _serviceScopeFactory.CreateScope().Returns(_serviceScope);
         _serviceScope.ServiceProvider.Returns(_serviceProvider);
