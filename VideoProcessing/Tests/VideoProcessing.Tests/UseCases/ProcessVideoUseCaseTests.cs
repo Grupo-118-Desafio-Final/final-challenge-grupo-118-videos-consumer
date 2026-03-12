@@ -88,7 +88,7 @@ public class ProcessVideoUseCaseTests
 
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == true &&
-            n.Message == "Video processed successfully" &&
+            n.Message == $"Video processed successfully. To download the zip file, click in the link: {zipBlobUrl}" &&
             n.UserId == message.UserId
         ));
     }

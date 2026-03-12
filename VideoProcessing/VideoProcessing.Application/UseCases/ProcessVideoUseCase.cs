@@ -73,7 +73,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             var processedMessage = new NotificationEvent
             {
                 IsSuccess = true,
-                Message = "Video processed successfully",
+                Message = $"Video processed successfully. To download the zip file, click in the link: {zipBlobUrl}",
                 UserId = message.UserId,
                 CreatedAt = DateTime.UtcNow
             };
