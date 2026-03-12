@@ -19,6 +19,7 @@ public class ProcessVideoUseCaseTests
     private readonly IVideoProcessedMessageProducer _producer;
     private readonly IProcessingRepository _processingRepository;
     private readonly ProcessVideoUseCase _useCase;
+    private readonly IFileSystem _fileSystem;
 
     public ProcessVideoUseCaseTests()
     {
@@ -29,6 +30,7 @@ public class ProcessVideoUseCaseTests
         _storage = Substitute.For<IFileStorage>();
         _producer = Substitute.For<IVideoProcessedMessageProducer>();
         _processingRepository = Substitute.For<IProcessingRepository>();
+        _fileSystem = Substitute.For<IFileSystem>();
 
         _useCase = new ProcessVideoUseCase(
             _planProvider,
@@ -37,7 +39,8 @@ public class ProcessVideoUseCaseTests
             _zipService,
             _storage,
             _producer,
-            _processingRepository
+            _processingRepository,
+            _fileSystem
         );
     }
 
