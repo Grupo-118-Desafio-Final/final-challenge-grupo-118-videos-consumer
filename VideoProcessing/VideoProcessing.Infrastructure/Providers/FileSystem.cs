@@ -19,17 +19,26 @@ public class FileSystem : IFileSystem
     public bool DeleteFiles(IEnumerable<string>? filePaths)
     {
         if (filePaths is null) return false;
-        if (!filePaths.Any()) return false;
 
-        var allDeleted = true;
-        foreach (var filePath in filePaths)
+        var filePathsList = filePaths.ToList();
+        if (!filePathsList.Any()) return false;
+
+        var directory = Path.GetDirectoryName(filePathsList.First());
+        if (string.IsNullOrWhiteSpace(directory)) return false;
+
+        try
         {
-            if (!DeleteFile(filePath))
+            if (Directory.Exists(directory))
             {
-                allDeleted = false;
+                Directory.Delete(directory, recursive: true);
+                return true;
             }
-        }
 
-        return allDeleted;
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
