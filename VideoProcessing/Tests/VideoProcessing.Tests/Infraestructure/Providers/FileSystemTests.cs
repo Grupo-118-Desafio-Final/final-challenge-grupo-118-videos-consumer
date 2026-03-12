@@ -7,16 +7,31 @@ public class FileSystemTests : IDisposable
 {
     private readonly FileSystem _fileSystem;
     private readonly List<string> _tempFiles;
+    private readonly List<string> _tempDirectories;
 
     public FileSystemTests()
     {
         _fileSystem = new FileSystem();
         _tempFiles = new List<string>();
+        _tempDirectories = new List<string>();
     }
 
     public void Dispose()
     {
-        // Cleanup temporary files created during tests
+        // Cleanup temporary directories first
+        foreach (var dir in _tempDirectories.Where(Directory.Exists))
+        {
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+
+        // Cleanup temporary files
         foreach (var file in _tempFiles.Where(File.Exists))
         {
             try
@@ -112,13 +127,16 @@ public class FileSystemTests : IDisposable
     #region DeleteFiles Tests
 
     [Fact]
-    public void DeleteFiles_WithMultipleExistingFiles_ShouldReturnTrue()
+    public void DeleteFiles_WithMultipleExistingFilesInSameDirectory_ShouldReturnTrueAndDeleteDirectory()
     {
         // Arrange
-        var file1 = Path.GetTempFileName();
-        var file2 = Path.GetTempFileName();
-        var file3 = Path.GetTempFileName();
-        _tempFiles.AddRange(new[] { file1, file2, file3 });
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var file1 = Path.Combine(tempDir, "file1.txt");
+        var file2 = Path.Combine(tempDir, "file2.txt");
+        var file3 = Path.Combine(tempDir, "file3.txt");
 
         File.WriteAllText(file1, "content1");
         File.WriteAllText(file2, "content2");
@@ -131,37 +149,19 @@ public class FileSystemTests : IDisposable
 
         // Assert
         result.Should().BeTrue();
+        Directory.Exists(tempDir).Should().BeFalse();
         File.Exists(file1).Should().BeFalse();
         File.Exists(file2).Should().BeFalse();
         File.Exists(file3).Should().BeFalse();
     }
 
     [Fact]
-    public void DeleteFiles_WithSomeNonExistentFiles_ShouldReturnFalse()
+    public void DeleteFiles_WithNonExistentDirectory_ShouldReturnFalse()
     {
         // Arrange
-        var existingFile = Path.GetTempFileName();
-        _tempFiles.Add(existingFile);
-        File.WriteAllText(existingFile, "content");
-
-        var nonExistentFile = Path.Combine(Path.GetTempPath(), $"nonexistent-{Guid.NewGuid()}.txt");
-        var filePaths = new[] { existingFile, nonExistentFile };
-
-        // Act
-        var result = _fileSystem.DeleteFiles(filePaths);
-
-        // Assert
-        result.Should().BeFalse();
-        File.Exists(existingFile).Should().BeFalse();
-    }
-
-    [Fact]
-    public void DeleteFiles_WithAllNonExistentFiles_ShouldReturnFalse()
-    {
-        // Arrange
-        var file1 = Path.Combine(Path.GetTempPath(), $"nonexistent1-{Guid.NewGuid()}.txt");
-        var file2 = Path.Combine(Path.GetTempPath(), $"nonexistent2-{Guid.NewGuid()}.txt");
-        var filePaths = new[] { file1, file2 };
+        var nonExistentDir = Path.Combine(Path.GetTempPath(), $"nonexistent-{Guid.NewGuid()}");
+        var file1 = Path.Combine(nonExistentDir, "file1.txt");
+        var filePaths = new[] { file1 };
 
         // Act
         var result = _fileSystem.DeleteFiles(filePaths);
@@ -191,11 +191,14 @@ public class FileSystemTests : IDisposable
     }
 
     [Fact]
-    public void DeleteFiles_WithSingleFile_ShouldWork()
+    public void DeleteFiles_WithSingleFile_ShouldDeleteDirectoryAndFile()
     {
         // Arrange
-        var tempFile = Path.GetTempFileName();
-        _tempFiles.Add(tempFile);
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var tempFile = Path.Combine(tempDir, "file.txt");
         File.WriteAllText(tempFile, "content");
 
         // Act
@@ -203,34 +206,33 @@ public class FileSystemTests : IDisposable
 
         // Assert
         result.Should().BeTrue();
+        Directory.Exists(tempDir).Should().BeFalse();
         File.Exists(tempFile).Should().BeFalse();
     }
 
     [Fact]
-    public void DeleteFiles_WithMixedValidAndInvalidPaths_ShouldReturnFalse()
+    public void DeleteFiles_WithNullOrEmptyPathInCollection_ShouldReturnFalse()
     {
         // Arrange
-        var validFile = Path.GetTempFileName();
-        _tempFiles.Add(validFile);
-        File.WriteAllText(validFile, "content");
-
-        var filePaths = new[] { validFile, "", "   ", null! };
+        var filePaths = new[] { "", "   ", null! };
 
         // Act
         var result = _fileSystem.DeleteFiles(filePaths);
 
         // Assert
         result.Should().BeFalse();
-        File.Exists(validFile).Should().BeFalse(); // Valid file should still be deleted
     }
 
     [Fact]
-    public void DeleteFiles_ShouldDeleteAllExistingFiles()
+    public void DeleteFiles_ShouldDeleteAllFilesAndDirectory()
     {
         // Arrange
-        var file1 = Path.GetTempFileName();
-        var file2 = Path.GetTempFileName();
-        _tempFiles.AddRange(new[] { file1, file2 });
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var file1 = Path.Combine(tempDir, "file1.txt");
+        var file2 = Path.Combine(tempDir, "file2.txt");
 
         File.WriteAllText(file1, "content1");
         File.WriteAllText(file2, "content2");
@@ -241,6 +243,7 @@ public class FileSystemTests : IDisposable
         _fileSystem.DeleteFiles(filePaths);
 
         // Assert
+        Directory.Exists(tempDir).Should().BeFalse();
         File.Exists(file1).Should().BeFalse();
         File.Exists(file2).Should().BeFalse();
     }
@@ -249,11 +252,14 @@ public class FileSystemTests : IDisposable
     public void DeleteFiles_WithLargeNumberOfFiles_ShouldHandleCorrectly()
     {
         // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
         var files = new List<string>();
         for (int i = 0; i < 10; i++)
         {
-            var tempFile = Path.GetTempFileName();
-            _tempFiles.Add(tempFile);
+            var tempFile = Path.Combine(tempDir, $"file{i}.txt");
             files.Add(tempFile);
             File.WriteAllText(tempFile, $"content{i}");
         }
@@ -263,30 +269,63 @@ public class FileSystemTests : IDisposable
 
         // Assert
         result.Should().BeTrue();
+        Directory.Exists(tempDir).Should().BeFalse();
         files.Should().OnlyContain(f => !File.Exists(f));
     }
 
     [Fact]
-    public void DeleteFiles_WithPartialFailures_ShouldContinueProcessing()
+    public void DeleteFiles_WhenExceptionOccurs_ShouldReturnFalse()
     {
-        // Arrange
-        var file1 = Path.GetTempFileName();
-        var file2 = Path.GetTempFileName();
-        _tempFiles.AddRange(new[] { file1, file2 });
-        
-        File.WriteAllText(file1, "content1");
-        File.WriteAllText(file2, "content2");
-        
-        var nonExistentFile = Path.Combine(Path.GetTempPath(), $"nonexistent-{Guid.NewGuid()}.txt");
-        var filePaths = new[] { file1, nonExistentFile, file2 };
+        // Arrange - usa arquivo raiz do sistema de arquivos que não pode ser deletado
+        var invalidPath = Path.GetPathRoot(Path.GetTempPath());
+        var filePaths = new[] { invalidPath! };
 
         // Act
         var result = _fileSystem.DeleteFiles(filePaths);
 
         // Assert
-        result.Should().BeFalse(); // Because one file doesn't exist
-        File.Exists(file1).Should().BeFalse(); // But existing files are deleted
-        File.Exists(file2).Should().BeFalse();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void DeleteFiles_WithDirectoryContainingSubdirectories_ShouldDeleteEverything()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var subDir = Path.Combine(tempDir, "subdir");
+        Directory.CreateDirectory(subDir);
+
+        var file1 = Path.Combine(tempDir, "file1.txt");
+        var file2 = Path.Combine(subDir, "file2.txt");
+
+        File.WriteAllText(file1, "content1");
+        File.WriteAllText(file2, "content2");
+
+        var filePaths = new[] { file1 };
+
+        // Act
+        var result = _fileSystem.DeleteFiles(filePaths);
+
+        // Assert
+        result.Should().BeTrue();
+        Directory.Exists(tempDir).Should().BeFalse();
+        Directory.Exists(subDir).Should().BeFalse();
+    }
+
+    [Fact]
+    public void DeleteFiles_WithPathWithoutDirectory_ShouldReturnFalse()
+    {
+        // Arrange
+        var filePaths = new[] { "filename.txt" }; // relative path without directory
+
+        // Act
+        var result = _fileSystem.DeleteFiles(filePaths);
+
+        // Assert
+        result.Should().BeFalse();
     }
 
     #endregion
@@ -311,20 +350,47 @@ public class FileSystemTests : IDisposable
     }
 
     [Fact]
-    public void DeleteFiles_AfterDeletingFileWithDeleteFile_ShouldReturnFalse()
+    public void DeleteFiles_AfterDeletingFileWithDeleteFile_ShouldStillDeleteDirectory()
     {
         // Arrange
-        var tempFile = Path.GetTempFileName();
-        _tempFiles.Add(tempFile);
-        File.WriteAllText(tempFile, "content");
-        
-        _fileSystem.DeleteFile(tempFile);
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var file1 = Path.Combine(tempDir, "file1.txt");
+        var file2 = Path.Combine(tempDir, "file2.txt");
+
+        File.WriteAllText(file1, "content1");
+        File.WriteAllText(file2, "content2");
+
+        _fileSystem.DeleteFile(file1);
 
         // Act
-        var result = _fileSystem.DeleteFiles(new[] { tempFile });
+        var result = _fileSystem.DeleteFiles(new[] { file2 });
 
         // Assert
-        result.Should().BeFalse();
+        result.Should().BeTrue();
+        Directory.Exists(tempDir).Should().BeFalse();
+    }
+
+    [Fact]
+    public void DeleteFiles_CalledTwiceOnSameDirectory_ShouldReturnTrueFirstTimeFalseSecondTime()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDir);
+        _tempDirectories.Add(tempDir);
+
+        var tempFile = Path.Combine(tempDir, "file.txt");
+        File.WriteAllText(tempFile, "content");
+
+        // Act
+        var firstResult = _fileSystem.DeleteFiles(new[] { tempFile });
+        var secondResult = _fileSystem.DeleteFiles(new[] { tempFile });
+
+        // Assert
+        firstResult.Should().BeTrue();
+        secondResult.Should().BeFalse();
     }
 
     #endregion
