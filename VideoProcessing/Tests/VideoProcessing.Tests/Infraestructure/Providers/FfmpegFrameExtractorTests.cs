@@ -21,7 +21,6 @@ public class FfmpegFrameExtractorTests : IDisposable
         _tempDirectories = new List<string>();
         
         // Default configuration
-        _configuration["QuantityFrames"].Returns("10");
         _configuration["FramesOutputPath"].Returns(Path.Combine(Path.GetTempPath(), $"test-frames-{Guid.NewGuid():N}"));
     }
 
@@ -89,84 +88,6 @@ public class FfmpegFrameExtractorTests : IDisposable
             ffmpegPath: "   ",
             ffprobePath: "   ");
 
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldReadQuantityFramesFromConfiguration()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("15");
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        _ = _configuration.Received(1)["QuantityFrames"];
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldUseDefaultFramesCount_WhenConfigurationIsMissing()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns((string?)null);
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldUseDefaultFramesCount_WhenConfigurationIsInvalid()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("invalid");
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldUseDefaultFramesCount_WhenConfigurationIsNegative()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("-5");
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldUseDefaultFramesCount_WhenConfigurationIsZero()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("0");
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_ShouldUseDefaultFramesCount_WhenConfigurationIsDecimal()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("10.5");
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
 
         // Assert
         extractor.Should().NotBeNull();
@@ -281,21 +202,6 @@ public class FfmpegFrameExtractorTests : IDisposable
             Arg.Any<Func<object, Exception?, string>>());
     }
 
-    [Theory]
-    [InlineData("5")]
-    [InlineData("10")]
-    [InlineData("20")]
-    public void Constructor_WithDifferentFrameCounts_ShouldAcceptValidCounts(string frameCount)
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns(frameCount);
-
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
 
     #endregion
 
@@ -516,18 +422,6 @@ public class FfmpegFrameExtractorTests : IDisposable
         // Arrange
         _configuration["FramesOutputPath"].Returns("");
 
-        // Act
-        var extractor = new FfmpegFrameExtractor(_logger, _configuration);
-
-        // Assert
-        extractor.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void Constructor_WithVeryLargeFrameCount_ShouldAccept()
-    {
-        // Arrange
-        _configuration["QuantityFrames"].Returns("1000");
 
         // Act
         var extractor = new FfmpegFrameExtractor(_logger, _configuration);
