@@ -520,7 +520,7 @@ public class MongoProcessingRepositoryTests
     }
 
     [Fact]
-    public async Task GetProcessingStatus_WithPendingStatus_ShouldReturnPending()
+    public async Task GetProcessingStatus_WithNotStartedStatus_ShouldReturnNotStarted()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
@@ -529,7 +529,7 @@ public class MongoProcessingRepositoryTests
         var document = new BsonDocument
         {
             { "_id", processingId },
-            { "processingStatus", ProcessingStatus.Pending.ToString() }
+            { "processingStatus", ProcessingStatus.NotStarted.ToString() }
         };
 
         var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
@@ -546,7 +546,7 @@ public class MongoProcessingRepositoryTests
         var result = await repository.GetProcessingStatus(processingId.ToString());
 
         // Assert
-        result.Should().Be(ProcessingStatus.Pending);
+        result.Should().Be(ProcessingStatus.NotStarted);
     }
 
     [Fact]
@@ -602,7 +602,7 @@ public class MongoProcessingRepositoryTests
     }
 
     [Fact]
-    public async Task GetProcessingStatus_WhenStatusFieldIsMissing_ShouldReturnPending()
+    public async Task GetProcessingStatus_WhenStatusFieldIsMissing_ShouldReturnNotStarted()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
@@ -628,11 +628,11 @@ public class MongoProcessingRepositoryTests
         var result = await repository.GetProcessingStatus(processingId.ToString());
 
         // Assert
-        result.Should().Be(ProcessingStatus.Pending);
+        result.Should().Be(ProcessingStatus.NotStarted);
     }
 
     [Fact]
-    public async Task GetProcessingStatus_WhenStatusFieldIsNull_ShouldReturnPending()
+    public async Task GetProcessingStatus_WhenStatusFieldIsNull_ShouldReturnNotStarted()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
@@ -658,11 +658,11 @@ public class MongoProcessingRepositoryTests
         var result = await repository.GetProcessingStatus(processingId.ToString());
 
         // Assert
-        result.Should().Be(ProcessingStatus.Pending);
+        result.Should().Be(ProcessingStatus.NotStarted);
     }
 
     [Fact]
-    public async Task GetProcessingStatus_WhenStatusValueIsInvalid_ShouldReturnPending()
+    public async Task GetProcessingStatus_WhenStatusValueIsInvalid_ShouldReturnNotStarted()
     {
         // Arrange
         var repository = new MongoProcessingRepository(_mockCollection, _logger);
@@ -688,11 +688,11 @@ public class MongoProcessingRepositoryTests
         var result = await repository.GetProcessingStatus(processingId.ToString());
 
         // Assert
-        result.Should().Be(ProcessingStatus.Pending);
+        result.Should().Be(ProcessingStatus.NotStarted);
     }
 
     [Theory]
-    [InlineData(ProcessingStatus.Pending)]
+    [InlineData(ProcessingStatus.NotStarted)]
     [InlineData(ProcessingStatus.Processing)]
     [InlineData(ProcessingStatus.Processed)]
     [InlineData(ProcessingStatus.Failed)]

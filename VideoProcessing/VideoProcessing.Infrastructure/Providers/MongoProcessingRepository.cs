@@ -71,7 +71,7 @@ public class MongoProcessingRepository : IProcessingRepository
         if (statusValue == BsonNull.Value || statusValue.AsString == null)
         {
             _logger.LogWarning("Processing status not found for ID {ProcessingId}", processingId);
-            return ProcessingStatus.Pending;
+            return ProcessingStatus.NotStarted;
         }
 
         if (Enum.TryParse<ProcessingStatus>(statusValue.AsString, out var status))
@@ -83,6 +83,6 @@ public class MongoProcessingRepository : IProcessingRepository
         _logger.LogWarning("Invalid processing status value '{StatusValue}' for ID {ProcessingId}",
             statusValue.AsString, processingId);
         
-        return ProcessingStatus.Pending;
+        return ProcessingStatus.NotStarted;
     }
 }
