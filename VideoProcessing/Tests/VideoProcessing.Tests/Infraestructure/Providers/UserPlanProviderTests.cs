@@ -22,7 +22,7 @@ public class UserPlanProviderTests
     {
         // Arrange
         var planId = "plan123";
-        var expectedPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "600", "4");
+        var expectedPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "600", 10);
         
         var messageHandler = new MockHttpMessageHandler(
             HttpStatusCode.OK,
@@ -48,7 +48,7 @@ public class UserPlanProviderTests
     {
         // Arrange
         var planId = "plan123";
-        var expectedPlan = new UserPlanDto("Basic", 9.99m, 720, "50", "300", "2");
+        var expectedPlan = new UserPlanDto("Basic", 9.99m, 720, "50", "300", 10);
         
         var messageHandler = new MockHttpMessageHandler(
             HttpStatusCode.OK,
@@ -74,7 +74,7 @@ public class UserPlanProviderTests
     {
         // Arrange
         var planId = "plan+with spaces&special=chars";
-        var expectedPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "600", "4");
+        var expectedPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "600", 10);
         
         var messageHandler = new MockHttpMessageHandler(
             HttpStatusCode.OK,
@@ -245,7 +245,7 @@ public class UserPlanProviderTests
     {
         // Arrange
         var planId = "plan123";
-        var expectedPlan = new UserPlanDto("Ultra", 49.99m, 2160, "200", "1200", "8");
+        var expectedPlan = new UserPlanDto("Ultra", 49.99m, 2160, "200", "1200", 10);
         
         var messageHandler = new MockHttpMessageHandler(
             HttpStatusCode.OK,

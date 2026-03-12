@@ -12,8 +12,10 @@ public class FfmpegFrameExtractor : IFrameExtractor
 {
     private readonly ILogger<FfmpegFrameExtractor> _logger;
     private readonly string _ffmpegPath;
+
     private readonly string _ffprobePath;
-    private readonly int _framesToExtract;
+
+    // private readonly int _framesToExtract;
     private static readonly TimeSpan ProcessTimeout = TimeSpan.FromMinutes(2);
     private readonly string? _outputBasePath;
 
@@ -26,12 +28,6 @@ public class FfmpegFrameExtractor : IFrameExtractor
         _logger = logger;
         _ffmpegPath = string.IsNullOrWhiteSpace(ffmpegPath) ? "ffmpeg" : ffmpegPath;
         _ffprobePath = string.IsNullOrWhiteSpace(ffprobePath) ? "ffprobe" : ffprobePath;
-
-        var framesValue = configuration["QuantityFrames"];
-        if (!int.TryParse(framesValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out _framesToExtract))
-        {
-            _framesToExtract = 10;
-        }
 
         ValidateBinaryAvailable(_ffmpegPath, "ffmpeg");
         ValidateBinaryAvailable(_ffprobePath, "ffprobe");
@@ -47,7 +43,7 @@ public class FfmpegFrameExtractor : IFrameExtractor
         _outputBasePath = basePath;
     }
 
-    public async Task<List<string>> ExtractFramesAsync(string videoPath, int qualityImage)
+    public async Task<List<string>> ExtractFramesAsync(string videoPath, int qualityImage, int desiredFrames = 10)
     {
         try
         {
@@ -59,20 +55,18 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
             Directory.CreateDirectory(outputDir);
 
-            var framesToExtract = _framesToExtract;
-
-            var extractedFiles = new List<string>(framesToExtract);
+            var extractedFiles = new List<string>(desiredFrames);
 
             var durationSeconds = await GetVideoDurationSecondsAsync(videoPath);
 
             if (durationSeconds <= 0)
                 throw new InvalidOperationException("Could not determine video duration");
 
-            var interval = durationSeconds / (framesToExtract + 1);
+            var interval = durationSeconds / (desiredFrames + 1);
 
             var q = MapResolutionOrQualityToQscale(qualityImage, out var mappedFromResolution);
 
-            for (int i = 1; i <= framesToExtract; i++)
+            for (int i = 1; i <= desiredFrames; i++)
             {
                 var timestampSeconds = interval * i;
                 var timestamp = TimeSpan.FromSeconds(timestampSeconds);
@@ -81,10 +75,10 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
                 // Se mappedFromResolution for true, qualityImage é uma resolução (ex: 1080)
                 // Se false, é um valor de qualidade JPEG (1-31)
-                var scaleFilter = mappedFromResolution 
-                    ? $"scale=-2:{qualityImage}" 
+                var scaleFilter = mappedFromResolution
+                    ? $"scale=-2:{qualityImage}"
                     : "scale=-2:1080"; // ou outra resolução padrão                
-                
+
                 var args =
                     $"-ss {timestampSeconds.ToString(CultureInfo.InvariantCulture)} " +
                     $"-i \"{videoPath}\" " +

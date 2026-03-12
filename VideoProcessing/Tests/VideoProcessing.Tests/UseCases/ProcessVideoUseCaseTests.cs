@@ -54,7 +54,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
         var zipPath = "/tmp/frames.zip";
@@ -161,7 +161,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Throws(new Exception("Download failed"));
 
@@ -191,7 +191,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
 
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
@@ -225,7 +225,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
 
@@ -260,7 +260,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
         var zipPath = "/tmp/frames.zip";
@@ -353,7 +353,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", "4");
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
         var zipPath = "/tmp/frames.zip";
@@ -433,7 +433,7 @@ public class ProcessVideoUseCaseTests
         };
 
         var expectedQuality = 720;
-        var userPlan = new UserPlanDto("Basic", 9.99m, expectedQuality, "50", "180", "2");
+        var userPlan = new UserPlanDto("Basic", 9.99m, expectedQuality, "50", "180", 10);
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg" };
         var zipPath = "/tmp/frames.zip";

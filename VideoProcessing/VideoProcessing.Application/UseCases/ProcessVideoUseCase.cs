@@ -45,7 +45,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
 
             var videoLocalPath = await _downloader.DownloadAsync(message.BlobUrl);
 
-            var pathFrames = await _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality);
+            var pathFrames = await _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames);
 
             var zipPath = await _zipService.CreateZipAsync(pathFrames);
             var zipBlobUrl = await _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId);

@@ -29,7 +29,6 @@ O projeto lê configurações do arquivo `VideoProcessing.Worker/appsettings.jso
 - `AzureBlob:ContainerName` - container onde serão gravados os zips.
 - `MongoDb:ConnectionString` - stringz de conexão do MongoDB.
 - `MongoDb:Database` e `MongoDb:Collection` - database e collection usados para atualizar status.
-- `QuantityFrames` - quantidade padrão de frames a extrair.
 
 > Observação: ao usar Azure real, defina `AzureBlob:ConnectionString` com a connection string da sua conta.
 
