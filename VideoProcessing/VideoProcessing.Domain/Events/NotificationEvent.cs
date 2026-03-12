@@ -1,9 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace VideoProcessing.Domain.Events;
 
-[ExcludeFromCodeCoverage]
 public class NotificationEvent
 {
     [JsonPropertyName(("isSuccess"))] public bool IsSuccess { get; set; }
