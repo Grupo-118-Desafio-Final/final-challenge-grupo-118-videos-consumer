@@ -7,6 +7,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Infrastructure.Messaging;
@@ -20,8 +21,9 @@ public class TestableVideoProcessingMessageConsumer : VideoProcessingMessageCons
     public TestableVideoProcessingMessageConsumer(
         RabbitMqConnectionFactory factory,
         IServiceScopeFactory scopeFactory,
-        IOptions<RabbitMqSettings> options)
-        : base(factory, scopeFactory, options)
+        IOptions<RabbitMqSettings> options,
+        ILogger<VideoProcessingMessageConsumer> logger)
+        : base(factory, scopeFactory, options, logger)
     {
     }
 
@@ -45,6 +47,7 @@ public class VideoProcessingMessageConsumerTests
     private readonly IServiceProvider _serviceProvider;
     private readonly IProcessVideoUseCase _useCase;
     private readonly RabbitMqConnectionFactory _factory;
+    private readonly ILogger<TestableVideoProcessingMessageConsumer> _logger;
 
     public VideoProcessingMessageConsumerTests()
     {
@@ -63,6 +66,7 @@ public class VideoProcessingMessageConsumerTests
         _serviceScope = Substitute.For<IServiceScope>();
         _serviceProvider = Substitute.For<IServiceProvider>();
         _useCase = Substitute.For<IProcessVideoUseCase>();
+        _logger = Substitute.For<ILogger<TestableVideoProcessingMessageConsumer>>();
 
         _serviceScopeFactory.CreateScope().Returns(_serviceScope);
         _serviceScope.ServiceProvider.Returns(_serviceProvider);
@@ -90,7 +94,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task DeserializeMessageAsync_WithValidJson_ShouldReturnValidEvent()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var json = @"{
             ""UserId"": ""user123"",
             ""PlanId"": ""plan456"",
@@ -114,7 +118,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task DeserializeMessageAsync_WithNullMessage_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var json = "null";
 
         // Act
@@ -129,7 +133,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task DeserializeMessageAsync_WithInvalidJson_ShouldThrowJsonException()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var invalidJson = "{ invalid json structure";
 
         // Act
@@ -143,7 +147,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task ProcessMessageAsync_WithValidMessage_ShouldCallUseCase()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var message = new VideoProcessingEvent
         {
             UserId = "user123",
@@ -167,7 +171,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task HandleMessageAsync_WithValidMessage_ShouldCallBasicAck()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var channel = Substitute.For<IChannel>();
 
         var json = @"{
@@ -193,7 +197,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task HandleMessageAsync_WithInvalidJson_ShouldCallBasicNack()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var channel = Substitute.For<IChannel>();
 
         var invalidJson = "{ invalid json";
@@ -212,7 +216,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task HandleMessageAsync_WhenUseCaseThrows_ShouldCallBasicNack()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var channel = Substitute.For<IChannel>();
 
         _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>())
@@ -241,7 +245,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task DeserializeMessageAsync_WithCaseInsensitiveJson_ShouldDeserialize()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var json = @"{
             ""userid"": ""user123"",
             ""PLANID"": ""plan456"",
@@ -264,7 +268,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task ProcessMessageAsync_ShouldCreateAndDisposeScope()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var message = new VideoProcessingEvent
         {
             UserId = "user123",
@@ -286,7 +290,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task HandleMessageAsync_WithSpecialCharactersInJson_ShouldProcess()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var channel = Substitute.For<IChannel>();
 
         var json = @"{
@@ -313,7 +317,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task DeserializeMessageAsync_WithComplexBlobUrl_ShouldDeserialize()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var json = @"{
             ""UserId"": ""user123"",
             ""PlanId"": ""plan456"",
@@ -336,7 +340,7 @@ public class VideoProcessingMessageConsumerTests
     public async Task ProcessMessageAsync_MultipleCalls_ShouldCreateMultipleScopes()
     {
         // Arrange
-        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options);
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
         var message1 = new VideoProcessingEvent
         {
             UserId = "user1",
@@ -375,7 +379,7 @@ public class VideoProcessingMessageConsumerTests
         var factory = new RabbitMqConnectionFactory(_options);
 
         // Act
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Assert
         consumer.Should().NotBeNull();
@@ -389,7 +393,7 @@ public class VideoProcessingMessageConsumerTests
         var factory = new RabbitMqConnectionFactory(_options);
 
         // Act
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Assert
         consumer.Should().BeAssignableTo<BackgroundService>();
@@ -835,7 +839,7 @@ public class VideoProcessingMessageConsumerTests
     {
         // Arrange
         var factory = new RabbitMqConnectionFactory(_options);
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Act & Assert
         // O consumer usa 'using var scope', o que garante o Dispose
@@ -876,7 +880,7 @@ public class VideoProcessingMessageConsumerTests
     {
         // Arrange
         var factory = new RabbitMqConnectionFactory(_options);
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Act & Assert
         // Verificar que os métodos são protected virtual permitindo override em testes
@@ -1005,7 +1009,7 @@ public class VideoProcessingMessageConsumerTests
         var factory = new RabbitMqConnectionFactory(_options);
 
         // Act
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Assert
         consumer.Should().NotBeNull();
@@ -1042,7 +1046,7 @@ public class VideoProcessingMessageConsumerTests
     {
         // Arrange
         var factory = new RabbitMqConnectionFactory(_options);
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options);
+        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
 
         // Act & Assert
         // A refatoração criou 3 métodos testáveis:
