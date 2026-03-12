@@ -247,6 +247,35 @@ public class VideoProcessingMessageConsumerTests
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WhenUseCaseReturnsFalse_ShouldNotCallBasicAckAndLogWarning()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
+        var channel = Substitute.For<IChannel>();
+
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(false);
+
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+
+        var body = Encoding.UTF8.GetBytes(json);
+        var ea = CreateBasicDeliverEventArgs(456, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert - Não deve chamar ACK nem NACK, apenas logar warning
+        await channel.DidNotReceive().BasicAckAsync(Arg.Any<ulong>(), Arg.Any<bool>());
+        await channel.DidNotReceive().BasicNackAsync(Arg.Any<ulong>(), Arg.Any<bool>(), Arg.Any<bool>());
+        await _useCase.Received(1).ExecuteAsync(Arg.Any<VideoProcessingEvent>());
+    }
+
+    [Fact]
     public async Task DeserializeMessageAsync_WithCaseInsensitiveJson_ShouldDeserialize()
     {
         // Arrange
