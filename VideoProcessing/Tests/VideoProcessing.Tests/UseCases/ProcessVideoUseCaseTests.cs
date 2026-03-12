@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using VideoProcessing.Application.UseCases;
@@ -20,6 +21,7 @@ public class ProcessVideoUseCaseTests
     private readonly IProcessingRepository _processingRepository;
     private readonly ProcessVideoUseCase _useCase;
     private readonly IFileSystem _fileSystem;
+    private readonly ILogger<ProcessVideoUseCase> _logger;
 
     public ProcessVideoUseCaseTests()
     {
@@ -31,6 +33,7 @@ public class ProcessVideoUseCaseTests
         _producer = Substitute.For<IVideoProcessedMessageProducer>();
         _processingRepository = Substitute.For<IProcessingRepository>();
         _fileSystem = Substitute.For<IFileSystem>();
+        _logger = Substitute.For<ILogger<ProcessVideoUseCase>>();
 
         _useCase = new ProcessVideoUseCase(
             _planProvider,
@@ -40,7 +43,8 @@ public class ProcessVideoUseCaseTests
             _storage,
             _producer,
             _processingRepository,
-            _fileSystem
+            _fileSystem,
+            _logger
         );
     }
 

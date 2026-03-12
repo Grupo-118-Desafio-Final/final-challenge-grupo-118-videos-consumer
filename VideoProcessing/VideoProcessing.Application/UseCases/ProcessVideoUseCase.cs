@@ -1,4 +1,5 @@
-﻿using VideoProcessing.Domain.Enums;
+﻿using Microsoft.Extensions.Logging;
+using VideoProcessing.Domain.Enums;
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Domain.Ports.On;
@@ -16,6 +17,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private readonly IVideoProcessedMessageProducer _producer;
     private readonly IProcessingRepository _processingRepository;
     private readonly IFileSystem _fileSystem;
+    private readonly ILogger<ProcessVideoUseCase> _logger;
 
     public ProcessVideoUseCase(
         IUserPlanProvider planProvider,
@@ -25,7 +27,8 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         IFileStorage storage,
         IVideoProcessedMessageProducer producer,
         IProcessingRepository processingRepository,
-        IFileSystem fileSystem)
+        IFileSystem fileSystem,
+        ILogger<ProcessVideoUseCase> logger)
     {
         _planProvider = planProvider;
         _downloader = downloader;
@@ -35,6 +38,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         _producer = producer;
         _processingRepository = processingRepository;
         _fileSystem = fileSystem;
+        _logger = logger;
     }
 
     public async Task ExecuteAsync(VideoProcessingEvent message)
@@ -46,6 +50,11 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
 
         try
         {
+            if (await MessageIsNotReadyForProcessingAsync(message))
+                return;
+
+            await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Processing);
+
             if (string.IsNullOrWhiteSpace(message.PlanId))
                 throw new ArgumentException("planId cannot be null or empty", nameof(message.PlanId));
 
@@ -92,5 +101,24 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             _fileSystem.DeleteFile(videoLocalPath);
             _fileSystem.DeleteFiles(pathFrames);
         }
+    }
+
+    private async Task<bool> MessageIsNotReadyForProcessingAsync(VideoProcessingEvent message)
+    {
+        var status = await _processingRepository.GetProcessingStatus(message.ProcessingId);
+        if (status == ProcessingStatus.Processed || status == ProcessingStatus.Failed)
+        {
+            _logger.LogWarning("Processing with ID {ProcessingId} is already completed with status {Status}",
+                message.ProcessingId, status);
+            return true;
+        }
+
+        if (status == ProcessingStatus.Processing)
+        {
+            _logger.LogWarning("Processing with ID {ProcessingId} is already in progress", message.ProcessingId);
+            return true;
+        }
+
+        return false;
     }
 }
