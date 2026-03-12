@@ -40,6 +40,8 @@ public class ZipService : IZipService
         var zipFileName = $"video-frames-{Guid.NewGuid():N}.zip";
         var zipPath = Path.Combine(baseDir, zipFileName);
 
+        _logger.LogInformation("Creating zip file at {ZipPath} with {FileCount} files.", zipPath, files.Count);
+        
         using (var zipToOpen = new FileStream(zipPath, FileMode.Create))
         using (var archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
         {
@@ -53,6 +55,8 @@ public class ZipService : IZipService
                 await fileStream.CopyToAsync(entryStream);
             }
         }
+        
+        _logger.LogInformation("Created zip file at {ZipPath} with {FileCount} files.", zipPath, files.Count);        
 
         return zipPath;
     }

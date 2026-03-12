@@ -41,7 +41,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         _logger = logger;
     }
 
-    public async Task ExecuteAsync(VideoProcessingEvent message)
+    public async Task<bool> ExecuteAsync(VideoProcessingEvent message)
     {
         string videoLocalPath, zipPath;
         videoLocalPath = zipPath = string.Empty;
@@ -51,7 +51,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
         try
         {
             if (await MessageIsNotReadyForProcessingAsync(message))
-                return;
+                return false;
 
             await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Processing);
 
@@ -79,9 +79,11 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             };
 
             await _producer.PublishAsync(processedMessage);
+            return true;
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error processing video");
             await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
 
             var processedMessage = new NotificationEvent
@@ -93,7 +95,7 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
             };
 
             await _producer.PublishAsync(processedMessage);
-            throw;
+            return false;
         }
         finally
         {
@@ -106,19 +108,18 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
     private async Task<bool> MessageIsNotReadyForProcessingAsync(VideoProcessingEvent message)
     {
         var status = await _processingRepository.GetProcessingStatus(message.ProcessingId);
-        if (status == ProcessingStatus.Processed || status == ProcessingStatus.Failed)
+        switch (status)
         {
-            _logger.LogWarning("Processing with ID {ProcessingId} is already completed with status {Status}",
-                message.ProcessingId, status);
-            return true;
+            case ProcessingStatus.Processed:
+            case ProcessingStatus.Failed:
+                _logger.LogWarning("Processing with ID {ProcessingId} is already completed with status {Status}",
+                    message.ProcessingId, status);
+                return true;
+            case ProcessingStatus.Processing:
+                _logger.LogWarning("Processing with ID {ProcessingId} is already in progress", message.ProcessingId);
+                return true;
+            default:
+                return false;
         }
-
-        if (status == ProcessingStatus.Processing)
-        {
-            _logger.LogWarning("Processing with ID {ProcessingId} is already in progress", message.ProcessingId);
-            return true;
-        }
-
-        return false;
     }
 }

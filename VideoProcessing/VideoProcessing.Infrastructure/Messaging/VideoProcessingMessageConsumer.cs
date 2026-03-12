@@ -65,11 +65,19 @@ public class VideoProcessingMessageConsumer : BackgroundService
 
             var message = await DeserializeMessageAsync(json);
 
-            await ProcessMessageAsync(message);
+            var shouldSendAck = await ProcessMessageAsync(message);
 
-            await channel.BasicAckAsync(ea.DeliveryTag, false);
-
-            _logger.LogInformation("[DeliveryTag: {DeliveryTag}] Ack enviado com sucesso", ea.DeliveryTag);
+            if (shouldSendAck)
+            {
+                await channel.BasicAckAsync(ea.DeliveryTag, false);
+                _logger.LogInformation("[DeliveryTag: {DeliveryTag}] Ack enviado com sucesso", ea.DeliveryTag);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "[DeliveryTag: {DeliveryTag}] Processamento ignorado, mensagem não reconhecida ou inválida",
+                    ea.DeliveryTag);
+            }
         }
         catch (Exception ex)
         {
@@ -89,12 +97,12 @@ public class VideoProcessingMessageConsumer : BackgroundService
         return Task.FromResult(message);
     }
 
-    protected virtual async Task ProcessMessageAsync(VideoProcessingEvent message)
+    protected async Task<bool> ProcessMessageAsync(VideoProcessingEvent message)
     {
         using var scope = _scopeFactory.CreateScope();
 
         var useCase = scope.ServiceProvider.GetRequiredService<IProcessVideoUseCase>();
 
-        await useCase.ExecuteAsync(message);
+        return await useCase.ExecuteAsync(message);
     }
 }

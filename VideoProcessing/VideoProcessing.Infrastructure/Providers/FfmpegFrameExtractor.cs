@@ -50,6 +50,10 @@ public class FfmpegFrameExtractor : IFrameExtractor
             if (!File.Exists(videoPath))
                 throw new FileNotFoundException("Video file not found", videoPath);
 
+            _logger.LogInformation(
+                "Started validation process for extracting frames. Video={Video} DesiredFrames={Frames} QualityOrResolution={Quality}",
+                videoPath, desiredFrames, qualityImage);
+
             var baseDir = _outputBasePath ?? Path.Combine(Path.GetTempPath(), "frames");
             var outputDir = Path.Combine(baseDir, Guid.NewGuid().ToString("N"));
 
@@ -66,6 +70,10 @@ public class FfmpegFrameExtractor : IFrameExtractor
 
             var q = MapResolutionOrQualityToQscale(qualityImage, out var mappedFromResolution);
 
+            _logger.LogInformation(
+                "Starting ffmpeg process for extracting frames. Video={Video} DesiredFrames={Frames} QualityOrResolution={Quality}",
+                videoPath, desiredFrames, qualityImage);            
+            
             for (int i = 1; i <= desiredFrames; i++)
             {
                 var timestampSeconds = interval * i;
@@ -86,7 +94,6 @@ public class FfmpegFrameExtractor : IFrameExtractor
                     $"-vf {scaleFilter} " +
                     $"-q:v {q} " +
                     $"\"{outputFile}\" -y";
-
 
                 var result = await RunProcessAsync(_ffmpegPath, args);
 
