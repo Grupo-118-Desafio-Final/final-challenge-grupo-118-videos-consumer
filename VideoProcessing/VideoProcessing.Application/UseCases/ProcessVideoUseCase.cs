@@ -70,10 +70,12 @@ public class ProcessVideoUseCase : IProcessVideoUseCase
 
             await _processingRepository.UpdateProcessing(message.ProcessingId, ProcessingStatus.Processed, zipBlobUrl);
 
+            var blobUrlForNotification = $@"<a href='{zipBlobUrl}'>Download de Zip Here</a>";
+            
             var processedMessage = new NotificationEvent
             {
                 IsSuccess = true,
-                Message = $"Video processed successfully. To download the zip file, click in the link: {zipBlobUrl}",
+                Message = $"Video processed successfully. To download the zip file, click in the link: {blobUrlForNotification}",
                 UserId = message.UserId,
                 CreatedAt = DateTime.UtcNow
             };
