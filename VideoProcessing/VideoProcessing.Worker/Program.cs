@@ -26,7 +26,7 @@ public class Program
             .Get<OpenTelemetryOptions>();
 
         builder.ConfigureCommonElements(openTelemetryOptions);
-        
+
         builder.Services.AddHostedService<VideoProcessingMessageConsumer>();
 
         builder.Services.Configure<RabbitMqSettings>(
@@ -68,8 +68,9 @@ public class Program
         // MongoDB client and processing repository
         var mongoConnectionString = builder.Configuration.GetValue<string>("MongoDb:ConnectionString");
         builder.Services.AddSingleton<IMongoClient>(sp => new MongoClient(mongoConnectionString));
-        
+
         builder.Services.AddScoped<IProcessingRepository, MongoProcessingRepository>();
+        builder.Services.AddScoped<IFileSystem, FileSystem>();
 
         var host = builder.Build();
 
