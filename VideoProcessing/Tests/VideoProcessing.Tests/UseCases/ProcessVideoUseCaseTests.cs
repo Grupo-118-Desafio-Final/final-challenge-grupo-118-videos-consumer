@@ -67,7 +67,7 @@ public class ProcessVideoUseCaseTests
         var zipPath = "/tmp/frames.zip";
         var zipBlobUrl = "https://blob.com/frames.zip";
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -106,7 +106,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
@@ -129,7 +129,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
@@ -152,7 +152,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
@@ -177,7 +177,7 @@ public class ProcessVideoUseCaseTests
 
         var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Throws(new Exception("Download failed"));
 
@@ -210,7 +210,7 @@ public class ProcessVideoUseCaseTests
         var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality)
@@ -246,7 +246,7 @@ public class ProcessVideoUseCaseTests
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -283,7 +283,7 @@ public class ProcessVideoUseCaseTests
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
         var zipPath = "/tmp/frames.zip";
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -317,7 +317,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
@@ -346,7 +346,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
@@ -382,7 +382,7 @@ public class ProcessVideoUseCaseTests
 
         var callOrder = new List<string>();
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         
         _planProvider.GetPlanAsync(message.PlanId).Returns(x =>
         {
@@ -462,7 +462,7 @@ public class ProcessVideoUseCaseTests
         var zipPath = "/tmp/frames.zip";
         var zipBlobUrl = "https://blob.com/frames.zip";
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, expectedQuality).Returns(frames);
@@ -567,7 +567,7 @@ public class ProcessVideoUseCaseTests
         var zipPath = "/tmp/frames.zip";
         var zipBlobUrl = "https://blob.com/frames.zip";
 
-        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(frames);
