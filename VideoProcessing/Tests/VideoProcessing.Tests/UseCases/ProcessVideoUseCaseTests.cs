@@ -67,6 +67,7 @@ public class ProcessVideoUseCaseTests
         var zipPath = "/tmp/frames.zip";
         var zipBlobUrl = "https://blob.com/frames.zip";
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -105,6 +106,8 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
 
@@ -126,6 +129,8 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
 
@@ -146,6 +151,8 @@ public class ProcessVideoUseCaseTests
             BlobUrl = "https://blob.com/video.mp4",
             EventAt = DateTime.UtcNow
         };
+
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
 
         // Act
         var act = async () => await _useCase.ExecuteAsync(message);
@@ -169,6 +176,8 @@ public class ProcessVideoUseCaseTests
         };
 
         var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
+        
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Throws(new Exception("Download failed"));
 
@@ -201,6 +210,7 @@ public class ProcessVideoUseCaseTests
         var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
         var videoLocalPath = "/tmp/video.mp4";
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality)
@@ -236,6 +246,7 @@ public class ProcessVideoUseCaseTests
         var videoLocalPath = "/tmp/video.mp4";
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -272,6 +283,7 @@ public class ProcessVideoUseCaseTests
         var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
         var zipPath = "/tmp/frames.zip";
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
@@ -305,6 +317,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
@@ -333,6 +346,7 @@ public class ProcessVideoUseCaseTests
             EventAt = DateTime.UtcNow
         };
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
@@ -368,6 +382,8 @@ public class ProcessVideoUseCaseTests
 
         var callOrder = new List<string>();
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        
         _planProvider.GetPlanAsync(message.PlanId).Returns(x =>
         {
             callOrder.Add("GetPlan");
@@ -446,6 +462,7 @@ public class ProcessVideoUseCaseTests
         var zipPath = "/tmp/frames.zip";
         var zipBlobUrl = "https://blob.com/frames.zip";
 
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
         _extractor.ExtractFramesAsync(videoLocalPath, expectedQuality).Returns(frames);
@@ -457,5 +474,111 @@ public class ProcessVideoUseCaseTests
 
         // Assert
         await _extractor.Received(1).ExtractFramesAsync(videoLocalPath, expectedQuality);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenStatusIsProcessed_ShouldNotProcessAgain()
+    {
+        // Arrange
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan123",
+            ProcessingId = "processing123",
+            BlobUrl = "https://blob.com/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Processed);
+
+        // Act
+        await _useCase.ExecuteAsync(message);
+
+        // Assert
+        await _planProvider.DidNotReceive().GetPlanAsync(Arg.Any<string>());
+        await _downloader.DidNotReceive().DownloadAsync(Arg.Any<string>());
+        await _processingRepository.DidNotReceive().UpdateProcessing(Arg.Any<string>(), Arg.Any<ProcessingStatus>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenStatusIsFailed_ShouldNotProcessAgain()
+    {
+        // Arrange
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan123",
+            ProcessingId = "processing123",
+            BlobUrl = "https://blob.com/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Failed);
+
+        // Act
+        await _useCase.ExecuteAsync(message);
+
+        // Assert
+        await _planProvider.DidNotReceive().GetPlanAsync(Arg.Any<string>());
+        await _downloader.DidNotReceive().DownloadAsync(Arg.Any<string>());
+        await _processingRepository.DidNotReceive().UpdateProcessing(Arg.Any<string>(), Arg.Any<ProcessingStatus>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenStatusIsProcessing_ShouldNotProcessAgain()
+    {
+        // Arrange
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan123",
+            ProcessingId = "processing123",
+            BlobUrl = "https://blob.com/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Processing);
+
+        // Act
+        await _useCase.ExecuteAsync(message);
+
+        // Assert
+        await _planProvider.DidNotReceive().GetPlanAsync(Arg.Any<string>());
+        await _downloader.DidNotReceive().DownloadAsync(Arg.Any<string>());
+        await _processingRepository.DidNotReceive().UpdateProcessing(Arg.Any<string>(), Arg.Any<ProcessingStatus>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenSuccessful_ShouldUpdateToProcessingBeforeStarting()
+    {
+        // Arrange
+        var message = new VideoProcessingEvent
+        {
+            UserId = "user123",
+            PlanId = "plan123",
+            ProcessingId = "processing123",
+            BlobUrl = "https://blob.com/video.mp4",
+            EventAt = DateTime.UtcNow
+        };
+
+        var userPlan = new UserPlanDto("Premium", 29.99m, 1080, "100", "300", 10);
+        var videoLocalPath = "/tmp/video.mp4";
+        var frames = new List<string> { "/tmp/frame1.jpg", "/tmp/frame2.jpg" };
+        var zipPath = "/tmp/frames.zip";
+        var zipBlobUrl = "https://blob.com/frames.zip";
+
+        _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.Pending);
+        _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
+        _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(frames);
+        _zipService.CreateZipAsync(frames).Returns(zipPath);
+        _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId).Returns(zipBlobUrl);
+
+        // Act
+        await _useCase.ExecuteAsync(message);
+
+        // Assert
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Processing);
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Processed, zipBlobUrl);
     }
 }
