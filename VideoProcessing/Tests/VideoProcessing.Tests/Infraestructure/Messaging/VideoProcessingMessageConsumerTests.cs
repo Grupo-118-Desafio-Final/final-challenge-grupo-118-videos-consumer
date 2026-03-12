@@ -34,7 +34,7 @@ public class TestableVideoProcessingMessageConsumer : VideoProcessingMessageCons
     public new Task<VideoProcessingEvent> DeserializeMessageAsync(string json)
         => base.DeserializeMessageAsync(json);
 
-    public new Task ProcessMessageAsync(VideoProcessingEvent message)
+    public new Task<bool> ProcessMessageAsync(VideoProcessingEvent message)
         => base.ProcessMessageAsync(message);
 }
 
@@ -157,10 +157,13 @@ public class VideoProcessingMessageConsumerTests
             EventAt = DateTime.UtcNow
         };
 
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(true);
+
         // Act
-        await consumer.ProcessMessageAsync(message);
+        var result = await consumer.ProcessMessageAsync(message);
 
         // Assert
+        result.Should().BeTrue();
         await _useCase.Received(1).ExecuteAsync(Arg.Is<VideoProcessingEvent>(e =>
             e.UserId == "user123" &&
             e.PlanId == "plan456" &&
@@ -184,6 +187,8 @@ public class VideoProcessingMessageConsumerTests
 
         var body = Encoding.UTF8.GetBytes(json);
         var ea = CreateBasicDeliverEventArgs(123, body);
+
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(true);
 
         // Act
         await consumer.HandleMessageAsync(channel, ea);
@@ -220,7 +225,7 @@ public class VideoProcessingMessageConsumerTests
         var channel = Substitute.For<IChannel>();
 
         _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>())
-            .Returns(Task.FromException(new Exception("Processing error")));
+            .Returns(Task.FromException<bool>(new Exception("Processing error")));
 
         var json = @"{
             ""UserId"": ""user123"",
@@ -239,6 +244,35 @@ public class VideoProcessingMessageConsumerTests
         // Assert
         await channel.Received(1).BasicNackAsync(789, false, false);
         await channel.DidNotReceive().BasicAckAsync(Arg.Any<ulong>(), Arg.Any<bool>());
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WhenUseCaseReturnsFalse_ShouldNotCallBasicAckAndLogWarning()
+    {
+        // Arrange
+        var consumer = new TestableVideoProcessingMessageConsumer(_factory, _serviceScopeFactory, _options, _logger);
+        var channel = Substitute.For<IChannel>();
+
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(false);
+
+        var json = @"{
+            ""UserId"": ""user123"",
+            ""PlanId"": ""plan456"",
+            ""ProcessingId"": ""proc789"",
+            ""BlobUrl"": ""https://storage.blob.core.windows.net/videos/video.mp4"",
+            ""EventAt"": ""2024-01-01T12:00:00Z""
+        }";
+
+        var body = Encoding.UTF8.GetBytes(json);
+        var ea = CreateBasicDeliverEventArgs(456, body);
+
+        // Act
+        await consumer.HandleMessageAsync(channel, ea);
+
+        // Assert - Não deve chamar ACK nem NACK, apenas logar warning
+        await channel.DidNotReceive().BasicAckAsync(Arg.Any<ulong>(), Arg.Any<bool>());
+        await channel.DidNotReceive().BasicNackAsync(Arg.Any<ulong>(), Arg.Any<bool>(), Arg.Any<bool>());
+        await _useCase.Received(1).ExecuteAsync(Arg.Any<VideoProcessingEvent>());
     }
 
     [Fact]
@@ -278,6 +312,8 @@ public class VideoProcessingMessageConsumerTests
             EventAt = DateTime.UtcNow
         };
 
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(true);
+
         // Act
         await consumer.ProcessMessageAsync(message);
 
@@ -303,6 +339,8 @@ public class VideoProcessingMessageConsumerTests
 
         var body = Encoding.UTF8.GetBytes(json);
         var ea = CreateBasicDeliverEventArgs(999, body);
+
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(true);
 
         // Act
         await consumer.HandleMessageAsync(channel, ea);
@@ -357,6 +395,8 @@ public class VideoProcessingMessageConsumerTests
             BlobUrl = "https://storage.blob.core.windows.net/videos/video2.mp4",
             EventAt = DateTime.UtcNow
         };
+
+        _useCase.ExecuteAsync(Arg.Any<VideoProcessingEvent>()).Returns(true);
 
         // Act
         await consumer.ProcessMessageAsync(message1);
@@ -874,33 +914,6 @@ public class VideoProcessingMessageConsumerTests
     #endregion
 
     #region Novos Testes para Métodos Extraídos (Após Refatoração)
-
-    [Fact]
-    public void ExtractedMethods_AreProtectedVirtual_ForTestability()
-    {
-        // Arrange
-        var factory = new RabbitMqConnectionFactory(_options);
-        var consumer = new VideoProcessingMessageConsumer(factory, _serviceScopeFactory, _options, _logger);
-
-        // Act & Assert
-        // Verificar que os métodos são protected virtual permitindo override em testes
-        var type = consumer.GetType();
-
-        var handleMethod = type.GetMethod("HandleMessageAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var deserializeMethod = type.GetMethod("DeserializeMessageAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var processMethod = type.GetMethod("ProcessMessageAsync",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-        handleMethod.Should().NotBeNull();
-        deserializeMethod.Should().NotBeNull();
-        processMethod.Should().NotBeNull();
-
-        handleMethod!.IsVirtual.Should().BeTrue();
-        deserializeMethod!.IsVirtual.Should().BeTrue();
-        processMethod!.IsVirtual.Should().BeTrue();
-    }
 
     [Fact]
     public void DeserializeMessageAsync_WithValidJson_ShouldReturnEvent()

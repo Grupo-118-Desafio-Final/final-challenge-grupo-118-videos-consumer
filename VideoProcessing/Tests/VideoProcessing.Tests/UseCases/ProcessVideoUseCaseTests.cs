@@ -70,7 +70,7 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
-        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(frames);
         _zipService.CreateZipAsync(frames).Returns(zipPath);
         _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId).Returns(zipBlobUrl);
 
@@ -80,7 +80,7 @@ public class ProcessVideoUseCaseTests
         // Assert
         await _planProvider.Received(1).GetPlanAsync(message.PlanId);
         await _downloader.Received(1).DownloadAsync(message.BlobUrl);
-        await _extractor.Received(1).ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality);
+        await _extractor.Received(1).ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames);
         await _zipService.Received(1).CreateZipAsync(frames);
         await _storage.Received(1).UploadAsync(zipPath, message.UserId, message.ProcessingId);
         await _processingRepository.Received(1)
@@ -109,11 +109,16 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("planId cannot be null or empty*");
+        result.Should().BeFalse();
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
+        await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
+            n.IsSuccess == false &&
+            n.Message == "Error processing video" &&
+            n.UserId == message.UserId
+        ));
     }
 
     [Fact]
@@ -132,11 +137,16 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("planId cannot be null or empty*");
+        result.Should().BeFalse();
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
+        await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
+            n.IsSuccess == false &&
+            n.Message == "Error processing video" &&
+            n.UserId == message.UserId
+        ));
     }
 
     [Fact]
@@ -155,11 +165,16 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("planId cannot be null or empty*");
+        result.Should().BeFalse();
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
+        await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
+            n.IsSuccess == false &&
+            n.Message == "Error processing video" &&
+            n.UserId == message.UserId
+        ));
     }
 
     [Fact]
@@ -182,10 +197,10 @@ public class ProcessVideoUseCaseTests
         _downloader.DownloadAsync(message.BlobUrl).Throws(new Exception("Download failed"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Download failed");
+        result.Should().BeFalse();
         await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
@@ -213,14 +228,14 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
-        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality)
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames)
             .Throws(new Exception("Frame extraction failed"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Frame extraction failed");
+        result.Should().BeFalse();
         await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
@@ -249,14 +264,14 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
-        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(frames);
         _zipService.CreateZipAsync(frames).Throws(new Exception("Zip creation failed"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Zip creation failed");
+        result.Should().BeFalse();
         await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
@@ -286,16 +301,16 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
-        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(frames);
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(frames);
         _zipService.CreateZipAsync(frames).Returns(zipPath);
         _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId)
             .Throws(new Exception("Upload failed"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Upload failed");
+        result.Should().BeFalse();
         await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
@@ -321,11 +336,11 @@ public class ProcessVideoUseCaseTests
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>().WithMessage("Plan not found");
-        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed, null);
+        result.Should().BeFalse();
+        await _processingRepository.Received(1).UpdateProcessing(message.ProcessingId, ProcessingStatus.Failed);
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
             n.Message == "Error processing video" &&
@@ -350,10 +365,10 @@ public class ProcessVideoUseCaseTests
         _planProvider.GetPlanAsync(message.PlanId).ThrowsAsync(new Exception("Plan not found"));
 
         // Act
-        var act = async () => await _useCase.ExecuteAsync(message);
+        var result = await _useCase.ExecuteAsync(message);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>();
+        result.Should().BeFalse();
         await _producer.Received(1).PublishAsync(Arg.Is<NotificationEvent>(n =>
             n.IsSuccess == false &&
             n.Message == "Error processing video" &&
@@ -396,7 +411,7 @@ public class ProcessVideoUseCaseTests
             return videoLocalPath;
         });
 
-        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality).Returns(x =>
+        _extractor.ExtractFramesAsync(videoLocalPath, userPlan.ImageQuality, userPlan.DesiredFrames).Returns(x =>
         {
             callOrder.Add("ExtractFrames");
             return frames;
@@ -465,7 +480,7 @@ public class ProcessVideoUseCaseTests
         _processingRepository.GetProcessingStatus(message.ProcessingId).Returns(ProcessingStatus.NotStarted);
         _planProvider.GetPlanAsync(message.PlanId).Returns(userPlan);
         _downloader.DownloadAsync(message.BlobUrl).Returns(videoLocalPath);
-        _extractor.ExtractFramesAsync(videoLocalPath, expectedQuality).Returns(frames);
+        _extractor.ExtractFramesAsync(videoLocalPath, expectedQuality, userPlan.DesiredFrames).Returns(frames);
         _zipService.CreateZipAsync(frames).Returns(zipPath);
         _storage.UploadAsync(zipPath, message.UserId, message.ProcessingId).Returns(zipBlobUrl);
 
@@ -473,7 +488,7 @@ public class ProcessVideoUseCaseTests
         await _useCase.ExecuteAsync(message);
 
         // Assert
-        await _extractor.Received(1).ExtractFramesAsync(videoLocalPath, expectedQuality);
+        await _extractor.Received(1).ExtractFramesAsync(videoLocalPath, expectedQuality, userPlan.DesiredFrames);
     }
 
     [Fact]

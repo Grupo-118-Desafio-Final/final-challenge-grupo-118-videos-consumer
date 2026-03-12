@@ -61,8 +61,7 @@ public class BlobVideoDownloader : IVideoDownloader
         var blobClient = containerClient.GetBlobClient(blobName);
 
         var ext = Path.GetExtension(blobName);
-
-        // TODO: Ajustar logica paga considerar o Path como o "a "pasta" antes do id do usuario e upload
+        
         var tempFile = Path.Combine(_outputBasePath, $"{Guid.NewGuid()}{ext}");
 
         try
@@ -88,7 +87,10 @@ public class BlobVideoDownloader : IVideoDownloader
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
+            _logger.LogInformation("Downloading blob to {TempFile}", tempFile);
+            
             await blobClient.DownloadToAsync(tempFile);
+
             _logger.LogInformation("Downloaded blob to {TempFile}", tempFile);
             return tempFile;
         }
