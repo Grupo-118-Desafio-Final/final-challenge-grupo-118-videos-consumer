@@ -2,5 +2,5 @@
 
 public interface IFrameExtractor
 {
-    Task<List<string>> ExtractFramesAsync(string videoPath, int qualityImage);
+    Task<List<string>> ExtractFramesAsync(string videoPath, int qualityImage, int desiredFrames = 10);
 }

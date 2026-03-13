@@ -6,6 +6,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using VideoProcessing.Domain.Events;
 using VideoProcessing.Domain.Ports.In;
 using VideoProcessing.Infrastructure.Messaging.Configuration;
@@ -14,24 +15,29 @@ namespace VideoProcessing.Infrastructure.Messaging;
 
 public class VideoProcessingMessageConsumer : BackgroundService
 {
-    private static readonly JsonSerializerOptions JsonOptions =new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     private readonly RabbitMqConnectionFactory _factory;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RabbitMqSettings _settings;
+    private readonly ILogger<VideoProcessingMessageConsumer> _logger;
 
-    public VideoProcessingMessageConsumer(RabbitMqConnectionFactory factory, IServiceScopeFactory scopeFactory, IOptions<RabbitMqSettings> options)
+    public VideoProcessingMessageConsumer(RabbitMqConnectionFactory factory,
+        IServiceScopeFactory scopeFactory,
+        IOptions<RabbitMqSettings> options,
+        ILogger<VideoProcessingMessageConsumer> logger)
     {
         _factory = factory;
         _scopeFactory = scopeFactory;
         _settings = options.Value;
+        _logger = logger;
     }
 
     [ExcludeFromCodeCoverage]
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
-        Console.WriteLine("Consumer iniciando...");
+        _logger.LogInformation("Consumer iniciando...");
 
         var connection = await _factory.CreateAsync();
         var channel = await connection.CreateChannelAsync();
@@ -40,14 +46,11 @@ public class VideoProcessingMessageConsumer : BackgroundService
 
         var consumer = new AsyncEventingBasicConsumer(channel);
 
-        consumer.ReceivedAsync += async (_, ea) =>
-        {
-            await HandleMessageAsync(channel, ea);
-        };
+        consumer.ReceivedAsync += async (_, ea) => { await HandleMessageAsync(channel, ea); };
 
         await channel.BasicConsumeAsync(_settings.ProcessImagesQueue, autoAck: false, consumer);
 
-        Console.WriteLine("Consumer conectado e aguardando mensagens...");
+        _logger.LogInformation("Consumer conectado e aguardando mensagens...");
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
@@ -58,19 +61,28 @@ public class VideoProcessingMessageConsumer : BackgroundService
         {
             var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-            Console.WriteLine($"Mensagem recebida: {json}");
+            _logger.LogInformation("[DeliveryTag: {DeliveryTag}] Mensagem recebida", ea.DeliveryTag);
 
             var message = await DeserializeMessageAsync(json);
 
-            await ProcessMessageAsync(message);
+            var shouldSendAck = await ProcessMessageAsync(message);
 
-            await channel.BasicAckAsync(ea.DeliveryTag, false);
-
-            Console.WriteLine("Mensagem processada com sucesso");
+            if (shouldSendAck)
+            {
+                await channel.BasicAckAsync(ea.DeliveryTag, false);
+                _logger.LogInformation("[DeliveryTag: {DeliveryTag}] Ack enviado com sucesso", ea.DeliveryTag);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "[DeliveryTag: {DeliveryTag}] Processamento ignorado, mensagem não reconhecida ou inválida",
+                    ea.DeliveryTag);
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao processar mensagem: {ex}");
+            _logger.LogError(ex, "[DeliveryTag: {DeliveryTag}] Erro ao processar mensagem", ea.DeliveryTag);
+
             await channel.BasicNackAsync(ea.DeliveryTag, false, false);
         }
     }
@@ -85,12 +97,12 @@ public class VideoProcessingMessageConsumer : BackgroundService
         return Task.FromResult(message);
     }
 
-    protected virtual async Task ProcessMessageAsync(VideoProcessingEvent message)
+    protected async Task<bool> ProcessMessageAsync(VideoProcessingEvent message)
     {
         using var scope = _scopeFactory.CreateScope();
 
         var useCase = scope.ServiceProvider.GetRequiredService<IProcessVideoUseCase>();
 
-        await useCase.ExecuteAsync(message);
+        return await useCase.ExecuteAsync(message);
     }
 }

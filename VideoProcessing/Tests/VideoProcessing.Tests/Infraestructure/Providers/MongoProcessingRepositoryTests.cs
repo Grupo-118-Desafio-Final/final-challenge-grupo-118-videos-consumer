@@ -425,4 +425,411 @@ public class MongoProcessingRepositoryTests
     }
 
     #endregion
+
+    #region Testes do GetProcessingStatus
+
+    [Fact]
+    public async Task GetProcessingStatus_WithValidProcessingIdAndStatus_ShouldReturnCorrectStatus()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+        var expectedStatus = ProcessingStatus.Processing;
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", expectedStatus.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(expectedStatus);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WithProcessedStatus_ShouldReturnProcessed()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", ProcessingStatus.Processed.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.Processed);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WithFailedStatus_ShouldReturnFailed()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", ProcessingStatus.Failed.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.Failed);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WithNotStartedStatus_ShouldReturnNotStarted()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", ProcessingStatus.NotStarted.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WhenDocumentNotFound_ShouldThrowKeyNotFoundException()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(false));
+        mockCursor.Current.Returns(Array.Empty<BsonDocument>());
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var act = async () => await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>()
+            .WithMessage($"No processing found with ID {processingId}");
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WithInvalidObjectId_ShouldThrowFormatException()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var invalidProcessingId = "invalid-objectid";
+
+        // Act
+        var act = async () => await repository.GetProcessingStatus(invalidProcessingId);
+
+        // Assert
+        await act.Should().ThrowAsync<FormatException>();
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WithEmptyProcessingId_ShouldThrowFormatException()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+
+        // Act
+        var act = async () => await repository.GetProcessingStatus(string.Empty);
+
+        // Assert
+        await act.Should().ThrowAsync<FormatException>();
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WhenStatusFieldIsMissing_ShouldReturnNotStarted()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId }
+            // Sem campo processingStatus
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WhenStatusFieldIsNull_ShouldReturnNotStarted()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", BsonNull.Value }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.NotStarted);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WhenStatusValueIsInvalid_ShouldReturnNotStarted()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", "InvalidStatus" }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(ProcessingStatus.NotStarted);
+    }
+
+    [Theory]
+    [InlineData(ProcessingStatus.NotStarted)]
+    [InlineData(ProcessingStatus.Processing)]
+    [InlineData(ProcessingStatus.Processed)]
+    [InlineData(ProcessingStatus.Failed)]
+    public async Task GetProcessingStatus_WithAllValidStatuses_ShouldReturnCorrectStatus(ProcessingStatus expectedStatus)
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", expectedStatus.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        var result = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result.Should().Be(expectedStatus);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_MultipleCalls_ShouldWorkCorrectly()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", ProcessingStatus.Processing.ToString() }
+        };
+
+        // Configurar para retornar um novo cursor a cada chamada
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(callInfo =>
+        {
+            var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+            mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+            mockCursor.Current.Returns(new[] { document });
+            return mockCursor;
+        });
+
+        // Act
+        var result1 = await repository.GetProcessingStatus(processingId.ToString());
+        var result2 = await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        result1.Should().Be(ProcessingStatus.Processing);
+        result2.Should().Be(ProcessingStatus.Processing);
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_ShouldLogInformationWhenSuccessful()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var document = new BsonDocument
+        {
+            { "_id", processingId },
+            { "processingStatus", ProcessingStatus.Processed.ToString() }
+        };
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(true), Task.FromResult(false));
+        mockCursor.Current.Returns(new[] { document });
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        await repository.GetProcessingStatus(processingId.ToString());
+
+        // Assert
+        _logger.Received(2).Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    [Fact]
+    public async Task GetProcessingStatus_WhenDocumentNotFound_ShouldLogWarning()
+    {
+        // Arrange
+        var repository = new MongoProcessingRepository(_mockCollection, _logger);
+        var processingId = ObjectId.GenerateNewId();
+
+        var mockCursor = Substitute.For<IAsyncCursor<BsonDocument>>();
+        mockCursor.MoveNextAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(false));
+        mockCursor.Current.Returns(Array.Empty<BsonDocument>());
+
+        _mockCollection.FindAsync(
+            Arg.Any<FilterDefinition<BsonDocument>>(),
+            Arg.Any<FindOptions<BsonDocument>>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(mockCursor);
+
+        // Act
+        try
+        {
+            await repository.GetProcessingStatus(processingId.ToString());
+        }
+        catch (KeyNotFoundException)
+        {
+            // Expected
+        }
+
+        // Assert
+        _logger.Received(1).Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    #endregion
 }

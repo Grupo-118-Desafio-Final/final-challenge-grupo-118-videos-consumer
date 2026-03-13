@@ -4,5 +4,5 @@ namespace VideoProcessing.Domain.Ports.In;
 
 public interface IProcessVideoUseCase
 {
-    Task ExecuteAsync(VideoProcessingEvent message);
+    Task<bool> ExecuteAsync(VideoProcessingEvent message);
 }

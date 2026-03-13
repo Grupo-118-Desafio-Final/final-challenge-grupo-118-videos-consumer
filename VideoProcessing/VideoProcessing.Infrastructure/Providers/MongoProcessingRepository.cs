@@ -51,4 +51,38 @@ public class MongoProcessingRepository : IProcessingRepository
         else
             _logger.LogInformation("Successfully updated processing with ID {ProcessingId}", processingId);
     }
+
+    public async Task<ProcessingStatus> GetProcessingStatus(string processingId)
+    {
+        _logger.LogInformation("Retrieving processing status for ID {ProcessingId}", processingId);
+
+        var builder = Builders<BsonDocument>.Filter;
+        var filter = builder.Eq("_id", ObjectId.Parse(processingId));
+        var document = await _collection.Find(filter).FirstOrDefaultAsync();
+
+        if (document == null)
+        {
+            _logger.LogWarning("No document found with ID {ProcessingId}", processingId);
+            throw new KeyNotFoundException($"No processing found with ID {processingId}");
+        }
+
+        var statusValue = document.GetValue("processingStatus", BsonNull.Value);
+
+        if (statusValue == BsonNull.Value || statusValue.AsString == null)
+        {
+            _logger.LogWarning("Processing status not found for ID {ProcessingId}", processingId);
+            return ProcessingStatus.NotStarted;
+        }
+
+        if (Enum.TryParse<ProcessingStatus>(statusValue.AsString, out var status))
+        {
+            _logger.LogInformation("Processing status for ID {ProcessingId} is {Status}", processingId, status);
+            return status;
+        }
+
+        _logger.LogWarning("Invalid processing status value '{StatusValue}' for ID {ProcessingId}",
+            statusValue.AsString, processingId);
+        
+        return ProcessingStatus.NotStarted;
+    }
 }
